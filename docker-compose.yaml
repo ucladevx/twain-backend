@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:10-alpine
+    volumes:
+      - twain-pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-twain}
+    restart: unless-stopped
+  backend:
+    image: twain/backend:latest
+    ports:
+      - 31337:31337
+    environment:
+      POSTGRES_HOSTNAME: postgres
+    restart: unless-stopped
+    depends_on: 
+      - postgres
+
+volumes:
+  twain-pgdata:
