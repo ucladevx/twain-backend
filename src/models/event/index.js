@@ -1,6 +1,6 @@
 const EventModel = (repo) => {
-    const createEvent = async (name) => {
-        return repo.createEvent(name);
+    const createEvent = async (name, desc, duration) => {
+        return repo.createEvent(name, desc, duration);
     };
 
     const getEvent = async (id) => {
