@@ -2,6 +2,22 @@ const express = require('express');
 const EventController = (eventModel) => {
     const router = express.Router();
 
+    // /event/:id GET
+    /* 
+    Parameters:
+        id - Supplied in the URL. Used to indicate the event you are requesting.
+    Returns:
+        Success - 200 Status Code
+        {
+            "data": {
+                "name": string
+            }
+        } 
+        Error - 400 Status Code
+        {
+            "message": string
+        }
+    */
     router.get('/:id', async (req, res) => {
         const params = req.params;
         const id = parseInt(params.id, 10);
@@ -12,10 +28,30 @@ const EventController = (eventModel) => {
             });
         }
         return res.status(200).json({
-            data: event
+            data: {
+                "name": event.name
+            }
         });
     });
 
+    // /event POST
+    /* 
+    Parameters:
+        {
+            "name": string
+        }
+    Returns:
+        Success - 200 Status Code
+        {
+            "data": {
+                "id": int
+            }
+        }
+        Error - 400 Status Code
+        {
+            "message": string
+        }
+    */
     router.post('/', async (req, res) => {
         if (!req.body)
             return res.status(400).json({

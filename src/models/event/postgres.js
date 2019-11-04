@@ -2,6 +2,7 @@ const EventRepo = (postgres) => {
     const createEventTableSQL = `
         CREATE TABLE IF NOT EXISTS events(
             id SERIAL PRIMARY KEY,
+            created_at timestamptz DEFAULT NOW(),
             name text
         );
     `;

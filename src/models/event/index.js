@@ -1,11 +1,13 @@
 const EventModel = (repo) => {
-    const createEvent = async (name, desc, duration) => {
-        return repo.createEvent(name, desc, duration);
+    // Creates an event object with the specified fields
+    const createEvent = async (name) => {
+        return repo.createEvent(name);
     };
 
+    // Gets an event object by ID
     const getEvent = async (id) => {
         const [event, err] = await repo.getEventByID(id);
-        return [event.name, err];
+        return [event, err];
     };
 
     return {

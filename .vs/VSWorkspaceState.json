@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\controllers",
+    "\\src\\models",
+    "\\src\\models\\event",
+    "\\src\\models\\user"
+  ],
+  "SelectedNode": "\\src\\models\\event\\postgres.js",
+  "PreviewInSolutionExplorer": false
+}
