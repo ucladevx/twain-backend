@@ -1,30 +1,27 @@
 const express = require('express');
-const UserController = (userModel) => {
+const UserController = (userModel, authService, googleAPIService) => {
   const router = express.Router();
 
-  // /user/:id GET
-  // Requires id as a url parameter for input, used to select which user you are
-  // requesting.
-  // Returns the user object under the format:
-  // {
-  //    "data": {
-  //      "id": Int
-  //      "name": String
-  //      "email": String
-  //      "description": String
-  //    }
-  // }
-  // If an error occured, then it will return a 400 status code, with the
-  // appropriate message under
-  // {
-  //    "message": String
-  // }
-  // TODO check if user actually exists
   router.get('/:id', async (req, res) => {
     const params = req.params;
     const id = parseInt(params.id, 10);
-    const [user, err] = await userModel.getUser(id);
-    if (err) {
+
+    // Get the user_id of the user sending the request
+    const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.header);
+
+    if (err1) {
+      return res.status(400).json({
+        message: err.message,
+      });
+    } else if (user_id_from_request != id) {
+      // Make sure the requestor has access to this object, if not, Access Denied
+      return res.status(403).json({
+        message: "Access Denied"
+      });
+    }
+
+    const [user, err2] = await userModel.getUser(id);
+    if (err2) {
       return res.status(400).json({
         message: err.message,
       });
@@ -34,79 +31,44 @@ const UserController = (userModel) => {
     });
   });
 
-  // /user POST
-  // Body: {
-  //  name: String
-  //  email: String
-  //  password: String
-  //  description: String
-  // }
-  //
-  // Returns Status 200 on success with the id of the user, otherwise will
-  // return the appropriate error code, with the data under the
-  // {
-  //  message: String
-  // }
-  // If the JSON body is malformed, it will return 400 BadRequest
-  // If the error could not be determined, it returns a 500 InternalServerError
 
-  router.post('/', async (req, res) => {
+  router.post('/signup', async (req, res) => {
     if (!req.body) return res.status(400).json({
       "message": "Malformed Request",
     });
-    const body = req.body;
-    const name = body.name;
-    const email = body.email;
-    const password = body.password;
-    const description = body.description;
-    const [data, err] = await userModel.createUser(
-      name,
-      email,
-      password,
-      description,
-    );
-    if (err) {
-      return res.status(400).json({
-        message: err.message,
-      });
-    }
-    return res.status(200).json({
-      data: {
-        id: data.id,
-      },
-    });
-  });
+    body = req.body
 
-  // /user/:id PUT
-  // Body: {
-  //  name: String
-  //  description: String
-  // }
-  //
-  // Returns status 204 no content on successful update, otherwise will return the
-  // appropriate error code, with the error under the body
-  // {
-  //  message: String
-  // }
-  router.put('/:id', async (req, res) => {
-    if (!req.body) return res.status(400);
-    const params = req.params;
-    const id = parseInt(params.id, 10);
-    const body = req.body;
-    const name = body.name;
-    const description = body.description;
-    const [data, err] = await userModel.updateUser(id, name, description);
+    const token = body.token;
+    console.log(token);
+    const data = await googleAPIService.getUserInfoWithToken(token);
+    console.log(data)
+    const first_name = data['given_name']
+    const last_name = data['family_name']
+    const email = data['email']
+    const google_id = data['id']
+    // const pic_url = data['picture']
+    
+    const pic_url = "Alex"
+    const [user, err] = await userModel.createUser(
+      first_name,
+      last_name,
+      email,
+      google_id,
+      pic_url,
+    );
+
     if (err) {
       return res.status(400).json({
         message: err.message,
       });
     }
-    return res.status(204).send(); // sends no content
+    return res.status(200).json(user);
   });
 
   return router;
-};
 
+}
+  
 module.exports = {
   UserController,
 };
