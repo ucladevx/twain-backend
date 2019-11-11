@@ -7,8 +7,8 @@ const UserController = (userModel, authService, googleAPIService) => {
     const id = parseInt(params.id, 10);
 
     // Get the user_id of the user sending the request
-    const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.header);
-
+    const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
+    console.log(user_id_from_request)
     if (err1) {
       return res.status(400).json({
         message: err.message,
@@ -39,16 +39,14 @@ const UserController = (userModel, authService, googleAPIService) => {
     body = req.body
 
     const token = body.token;
-    console.log(token);
     const data = await googleAPIService.getUserInfoWithToken(token);
-    console.log(data)
+    
     const first_name = data['given_name']
     const last_name = data['family_name']
     const email = data['email']
     const google_id = data['id']
-    // const pic_url = data['picture']
+    const pic_url = data['picture']
     
-    const pic_url = "Alex"
     const [user, err] = await userModel.createUser(
       first_name,
       last_name,

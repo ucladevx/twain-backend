@@ -20,6 +20,8 @@ const UserRepo = (postgres) => {
   const setupRepo = async () => {
     try {
       const client = await postgres.connect();
+      // Uncomment this to delete and re-define the users table
+      // await client.query('DROP TABLE users;');
       await client.query(createUserTableSQL);
       client.release();
       console.log('User Table Created');
@@ -38,11 +40,8 @@ const UserRepo = (postgres) => {
   // Users createUserSQL and inserts a user into the users column. If we get an
   // error, then we return the (null, error), otherwise return (data, null)
   const createUser = async (first_name, last_name, email, google_id, pic_url) => {
-    console.log(google_id)
-    console.log(pic_url)
     const values = [first_name, last_name, email, google_id, pic_url];
     try {
-      console.log(values)
       const client = await postgres.connect();
       const res = await client.query(createUserSQL, values);
       client.release();
