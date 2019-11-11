@@ -33,7 +33,6 @@ function start(port) {
 
   const authService = AuthService(userModel);
   const googleAPIService = GoogleAPIService()
-  googleAPIService.setupRepo();
   const userController = UserController(userModel, authService, googleAPIService);
 
   const eventRepo = EventRepo(postgres);

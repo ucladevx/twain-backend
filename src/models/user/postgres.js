@@ -20,8 +20,6 @@ const UserRepo = (postgres) => {
   const setupRepo = async () => {
     try {
       const client = await postgres.connect();
-      // Uncomment this to delete and re-define the users table
-      // await client.query('DROP TABLE users;');
       await client.query(createUserTableSQL);
       client.release();
       console.log('User Table Created');
