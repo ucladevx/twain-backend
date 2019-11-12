@@ -10,9 +10,15 @@ const TaskModel = (repo) => {
         return [task, err];
     };
 
+    const setTaskCompleted = async (taskID) => {
+        const [task, err] = await repo.setTaskCompleted(taskID);
+        return [task, err];
+    };
+
     return {
         createTask,
-        getTask
+        getTask, 
+        setTaskCompleted
     };
 }
 

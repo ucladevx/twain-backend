@@ -68,6 +68,54 @@ const TaskController = (taskModel, authService) => {
         })
     })
 
+
+    //my attempt to make a POST request for task-complete:
+    router.post('/complete_task', async (req, res) =>{
+        if (!req.body)
+        return res.status(400).json({
+            message: "Malformed Request"
+        });
+    const body = req.body;
+    const ids = body.ids;
+    //const promises = ids.map(id => taskModel.setTaskComplete(id))
+    //const rows = await Promise.all(promises)
+    // ask Alex about for loops because it makes more sense to have it by one single ID because 
+    // would not send other user IDs
+    // ask what we want if some of the updates fail, fial the whole request?
+    // let completed_arr = []
+    // for await (id of ids) {
+    //     const [data, err] = await taskModel.setTaskComplete(id)
+    //     if (err) {
+    //         return res.status(400).json({
+    //             "data": null,
+    //             "error": err.message,
+    //         })
+    //     }
+    //     completed_arr.push(data)
+    // }
+    const promises = ids.map(id => taskModel.setTaskCompleted(id))
+    const rows = await Promise.all(promises)
+    console.log(rows)
+    let completed_arr = []
+    rows.forEach(t => {
+        if (t[1]) {
+            return res.status(400).json({
+                "data": null,
+                "error": t[1].message,
+            })
+        }
+        completed_arr.push(t[0])
+    });
+
+    
+    return res.status(200).json({
+        "data": completed_arr,
+        "error": '',
+    })
+
+
+    })
+
     return router;
 }
 
