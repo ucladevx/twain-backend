@@ -29,10 +29,13 @@ POST /api/users/signup (*No access token in header needed for this request*)
 returns 
   ```
     {
-	  	"id": <TWAIN_USER_ID>,
-		"first_name": "<user_first_name>",
-		"last_name": "<user_last_name>",
-		"picture_url": "<profile_picture_url_from_google",
-		"created_at": <CREATED_AT_TIMESTAMP>
+      "data": {
+  	  	"id": <TWAIN_USER_ID>,
+    		"first_name": "<user_first_name>",
+    		"last_name": "<user_last_name>",
+    		"picture_url": "<profile_picture_url_from_google",
+    		"created_at": <CREATED_AT_TIMESTAMP>
+      },
+      "error": "<ERROR_MESSAGE>",
     }
 ```
