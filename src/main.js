@@ -21,13 +21,19 @@ const {TaskRepo} = require('./models/task/postgres');
 const {TaskModel} = require('./models/task');
 const {TaskController} = require('./controllers/task');
 
+const {AuthService} = require('./services/auth')
+const {GoogleAPIService} = require('./services/googleapis')
+
 function start(port) {
   const postgres = PostgresDB(config.database);
 
   const userRepo = UserRepo(postgres);
   userRepo.setupRepo();
   const userModel = UserModel(userRepo);
-  const userController = UserController(userModel);
+
+  const authService = AuthService(userModel);
+  const googleAPIService = GoogleAPIService()
+  const userController = UserController(userModel, authService, googleAPIService);
 
   const eventRepo = EventRepo(postgres);
   eventRepo.setupRepo();

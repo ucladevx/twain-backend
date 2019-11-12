@@ -20,9 +20,13 @@ format:
 	npx prettier --write --arrow-parens always --single-quote --trailing-comma all --no-bracket-spacing "src/**/*.js"
 	npx prettier --write --arrow-parens always --single-quote --trailing-comma all --no-bracket-spacing "test/**/*.js"
 
-# Currently not working yet
-test:
-	docker exec -i -t `docker ps -q --filter status=running --filter ancestor=twain/backend:latest` /bin/bash -c "npm run test"
+# Open shell to the postgres instance
+p_shell:
+	docker-compose exec postgres psql -U postgres twain
+
+#CAUTION: WILL DELETE ALL DATA
+reset_db: 
+	docker-compose exec postgres psql -U postgres twain -c "DROP TABLE users, tasks, events;"
 
 
 

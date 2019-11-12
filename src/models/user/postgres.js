@@ -7,10 +7,11 @@ const UserRepo = (postgres) => {
   const createUserTableSQL = `
     CREATE TABLE IF NOT EXISTS users(
       id SERIAL PRIMARY KEY,
-      name text,
+      first_name text,
+      last_name text,
       email text NOT NULL UNIQUE,
-      passhash text NOT NULL,
-      description text,
+      google_id text,
+      picture_url text,
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
@@ -30,14 +31,14 @@ const UserRepo = (postgres) => {
 
   // Inserts a user entry into the users table
   const createUserSQL = `
-    INSERT INTO users(name, email, passhash, description)
-    VALUES($1, $2, $3, $4)
-    RETURNING id, created_at;`;
+    INSERT INTO users(first_name, last_name, email, google_id, picture_url)
+    VALUES($1, $2, $3, $4, $5)
+    RETURNING id, first_name, last_name, picture_url, created_at;`;
 
   // Users createUserSQL and inserts a user into the users column. If we get an
   // error, then we return the (null, error), otherwise return (data, null)
-  const createUser = async (name, email, passhash, description) => {
-    const values = [name, email, passhash, description];
+  const createUser = async (first_name, last_name, email, google_id, pic_url) => {
+    const values = [first_name, last_name, email, google_id, pic_url];
     try {
       const client = await postgres.connect();
       const res = await client.query(createUserSQL, values);
@@ -48,83 +49,48 @@ const UserRepo = (postgres) => {
     }
   };
 
+  // Retrieve the user id where the google ID is given
+  const getUserIDByGoogleIDSQL = `
+    SELECT id FROM users WHERE google_id=$1;`;
+
+  // Uses getUserIDByGoogleIDSQL to retrieve the user, and return either (user, null),
+  // or (null, error)
+  const getUserIDByGoogleID = async (google_id) => {
+    const values = [google_id];
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(getUserIDByGoogleIDSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch (err) {
+      return [null, err];
+    }
+  };
+
   // Retrieve all user fields from the user column by a user's id. This should
   // only ever return one user, since IDs should be unique
-  const getUserByIDSQL = `
-    SELECT id, name, email, passhash, description, created_at, updated_at FROM users WHERE id=$1;`;
+  const getUserSQL = `
+    SELECT * FROM users WHERE id=$1;`;
 
-  // Uses getUserByIDSQL to retrieve the user, and return either (user, null),
+  // Uses getUserSQL to retrieve the user, and return either (user, null),
   // or (null, error)
-  const getUserByID = async (id) => {
+  const getUser = async (id) => {
     const values = [id];
     try {
       const client = await postgres.connect();
-      const res = await client.query(getUserByIDSQL, values);
+      const res = await client.query(getUserSQL, values);
       client.release();
       return [res.rows[0], null];
     } catch (err) {
       return [null, err];
-    }
-  };
-
-  const getUserByEmailSQL = `
-    SELECT id, name, email, passhash, description, created_at, updated_at FROM users WHERE email=$1;`;
-
-  const getUserByEmail = async (email) => {
-    const values = [email];
-    try {
-      const client = await postgres.connect();
-      const res = await client.query(getUserByEmailSQL, values);
-      client.release();
-      return [res.rows[0], null];
-    } catch (err) {
-      return [null, err];
-    }
-  };
-
-  const updateUserSQL = `
-    UPDATE users
-    SET name=$2, description=$3, updated_at=NOW()
-    WHERE id=$1
-    RETURNING updated_at;`;
-
-  const updateUser = async (id, name, description) => {
-    const values = [id, name, description];
-    try {
-      const client = await postgres.connect();
-      const res = await client.query(updateUserSQL, values);
-      client.release();
-      return [res.rows[0], null];
-    } catch (err) {
-      return [null, err];
-    }
-  };
-
-  // SQL query to delete user by their id
-  const deleteUserSQL = `
-    DELETE FROM users WHERE id=$1;`;
-
-  // Deletes the user, and either returns an error if something went wrong, or
-  // null
-  const deleteUser = async (id) => {
-    const values = [id];
-    try {
-      const client = await postgres.connect();
-      await client.query(deleteUserSQL, values);
-      client.release();
-      return null;
-    } catch (err) {
-      return err;
     }
   };
 
   return {
     setupRepo,
     createUser,
-    getUserByID,
-    getUserByEmail,
-    updateUser,
-    deleteUser,
+    getUserIDByGoogleID,
+    getUser,
   };
 };
 
