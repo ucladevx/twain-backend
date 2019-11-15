@@ -8,7 +8,8 @@ const TaskController = (taskModel) => {
         const [task, err] = await taskModel.getTask(id);
         if (err) {
             return res.status(400).json({
-                message: err.message
+                data: {}, 
+                error: err.message
             });
         }
         return res.status(200).json({
@@ -20,22 +21,23 @@ const TaskController = (taskModel) => {
     router.post('/', async (req, res) => {
         if (!req.body)
             return res.status(400).json({
+                data: {},
                 error: "Malformed Request"
             });
         const body = req.body;
-        if (!("name" in body))
-            return res.status(400).json({
-                error: "Malformed Request"
-            })
-
         const name = body.name;
         const description = body.description;
         const duration = body.duration;
-        const [data, err] = await taskModel.createTask(name, description, duration);
+
+        if (name === undefined || duration === undefined)
+            return res.status(400).json({
+                data: {},
+                error: "Malformed Request"
+            });
+
+        const [task, err] = await taskModel.createTask(name, description, duration);
         return res.status(200).json({
-            data: {
-                id: data.id
-            },
+            data: task,
             error: err ? err.message : ""
         })
     })

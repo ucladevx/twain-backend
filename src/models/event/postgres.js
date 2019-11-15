@@ -3,7 +3,7 @@ const EventRepo = (postgres) => {
         CREATE TABLE IF NOT EXISTS events(
             id SERIAL PRIMARY KEY,
             created_at timestamptz DEFAULT NOW(),
-            name text
+            name text NOT NULL
         );
     `;
 
@@ -23,7 +23,7 @@ const EventRepo = (postgres) => {
     const createEventSQL = `
         INSERT INTO events(name)
         VALUES ($1)
-        RETURNING id, created_at;
+        RETURNING *;
     `;
 
     const createEvent = async (name) => {
