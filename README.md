@@ -22,20 +22,96 @@ Use the `access_token` from Chrome to do requests
 ### Create new user
 POST /api/users/signup (*No access token in header needed for this request*)
 ```
-    {
-        "token": "<ACCESS_TOKEN_FROM_CHROME"
-    }
+{
+  "token": "<ACCESS_TOKEN_FROM_CHROME>"
+}
 ```
 returns 
-  ```
-    {
-      "data": {
-  	  	"id": <TWAIN_USER_ID>,
-    		"first_name": "<user_first_name>",
-    		"last_name": "<user_last_name>",
-    		"picture_url": "<profile_picture_url_from_google",
-    		"created_at": <CREATED_AT_TIMESTAMP>
-      },
-      "error": "<ERROR_MESSAGE>",
-    }
+```	
+{
+  "data": {
+    "id": <TWAIN_USER_ID>,
+    "first_name": "<user_first_name>",
+    "last_name": "<user_last_name>",
+    "picture_url": "<profile_picture_url_from_google",
+    "created_at": <CREATED_AT_TIMESTAMP>
+  },
+  "error": "<ERROR_MESSAGE>",
+}
+```
+
+### Create new task
+POST /api/tasks/
+```
+{
+  "name": "<task_name>"
+  "description": "<task_description>",
+  "duration": <task_duration_in_seconds>
+}
+```
+returns
+```
+{
+  "data": {
+    "id": <task_id>,
+    "name": "<task_name>",
+    "description": "<task_description>",
+    "duration": <task_duration_in_seconds>
+    "scheduled": <boolean>,
+    "completed": <boolean>
+  },
+  "error": "<ERROR_MESSAGE>"
+}
+```
+
+### Get task by ID
+GET /api/tasks/{id}
+
+returns
+```
+{
+  "data": {
+    "id": <task_id>,
+    "name": "<task_name>",
+    "description": "<task_description>",
+    "duration": <task_duration_in_seconds>
+    "scheduled": <boolean>,
+    "completed": <boolean>
+  },
+  "error": "<ERROR_MESSAGE>"
+}
+```
+
+### Create Event
+POST /api/events/
+```
+{
+  "name": "<event_name>"
+}
+```
+returns
+```
+{
+  "data": {
+    "id": <event_id>,
+    "created_at": <timestamp>
+    "name": "<event_name>"
+  },
+  "error": "<ERROR_MESSAGE>"
+}
+```
+
+### Get event by ID
+GET /api/events/{id}
+
+returns
+```
+{
+  "data": {
+    "id": <event_id>,
+    "created_at": <timestamp>
+    "name": "<event_name>"
+  },
+  "error": "<ERROR_MESSAGE>"
+}
 ```

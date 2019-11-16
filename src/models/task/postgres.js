@@ -4,7 +4,7 @@ const TaskRepo = (postgres) => {
             id SERIAL PRIMARY KEY,
             name text NOT NULL,
             description text, 
-            duration int, 
+            duration int NOT NULL, 
             scheduled boolean,
             completed boolean
         );
@@ -26,7 +26,7 @@ const TaskRepo = (postgres) => {
     const createTaskSQL = `
         INSERT INTO tasks(name, description, duration, scheduled, completed)
         VALUES ($1, $2, $3, FALSE, FALSE)
-        RETURNING id;
+        RETURNING *;
     `;
 
     const createTask = async (name, description, duration) => {
