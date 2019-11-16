@@ -66,7 +66,6 @@ const TaskRepo = (postgres) => {
         WHERE id=$1
         RETURNING *;
     `
-    //my work
     const setTaskCompleted = async (taskID) => {
         const values = [taskID];
         try {
