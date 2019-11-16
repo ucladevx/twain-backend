@@ -88,7 +88,7 @@ POST /api/events/
 {
   "name": "<event_name>"
 }
-
+```
 returns
 ```
 {
