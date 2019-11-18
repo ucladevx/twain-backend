@@ -6,7 +6,8 @@ const TaskRepo = (postgres) => {
             description text, 
             duration int NOT NULL, 
             scheduled boolean,
-            completed boolean
+            completed boolean,
+            user_id text NOT NULL
         );
     `;
 
@@ -24,13 +25,13 @@ const TaskRepo = (postgres) => {
     }
 
     const createTaskSQL = `
-        INSERT INTO tasks(name, description, duration, scheduled, completed)
-        VALUES ($1, $2, $3, FALSE, FALSE)
+        INSERT INTO tasks(name, description, duration, scheduled, completed, user_id)
+        VALUES ($1, $2, $3, FALSE, FALSE, $4)
         RETURNING *;
     `;
 
-    const createTask = async (name, description, duration) => {
-        const values = [name, description, duration];
+    const createTask = async (name, description, duration, user_id) => {
+        const values = [name, description, duration, user_id];
         try {
             const client = await postgres.connect();
             const res = await client.query(createTaskSQL, values);

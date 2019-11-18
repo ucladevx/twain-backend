@@ -58,7 +58,8 @@ returns
     "description": "<task_description>",
     "duration": <task_duration_in_seconds>
     "scheduled": <boolean>,
-    "completed": <boolean>
+    "completed": <boolean>,
+    "user_id": <TWAIN_USER_ID>
   },
   "error": "<ERROR_MESSAGE>"
 }
@@ -76,7 +77,8 @@ returns
     "description": "<task_description>",
     "duration": <task_duration_in_seconds>
     "scheduled": <boolean>,
-    "completed": <boolean>
+    "completed": <boolean>,
+    "user_id": <TWAIN_USER_ID>
   },
   "error": "<ERROR_MESSAGE>"
 }

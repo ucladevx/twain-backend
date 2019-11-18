@@ -43,7 +43,7 @@ function start(port) {
   const taskRepo = TaskRepo(postgres);
   taskRepo.setupRepo();
   const taskModel = TaskModel(taskRepo);
-  const taskController = TaskController(taskModel);
+  const taskController = TaskController(taskModel, authService);
 
   const app = express();
   app.disable('x-powered-by');
