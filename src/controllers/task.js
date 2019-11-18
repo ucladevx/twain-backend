@@ -47,7 +47,7 @@ const TaskController = (taskModel, authService) => {
         const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
         if (err1) {
             return res.status(400).json({
-                message: err2.message,
+                message: err1.message,
             });
         }
 
@@ -57,10 +57,10 @@ const TaskController = (taskModel, authService) => {
                 error: "Malformed Request"
             });
 
-        const [task, err] = await taskModel.createTask(name, description, duration, user_id_from_request);
+        const [task, err2] = await taskModel.createTask(name, description, duration, user_id_from_request);
         return res.status(200).json({
             data: task,
-            error: err ? err.message : ""
+            error: err2 ? err.message : ""
         })
     })
 
