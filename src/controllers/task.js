@@ -15,23 +15,26 @@ const TaskController = (taskModel, authService) => {
         }
 
         const [task, err2] = await taskModel.getTask(id);
-
-        if (user_id_from_request != task.user_id) {
-            // Make sure the requestor has access to this object, if not, Access Denied
-            return res.status(403).json({
-                message: "Access Denied"
-            });
-        } else if (err2) {
+    
+        try {
+            if (user_id_from_request != task.user_id) {
+                // Make sure the requestor has access to this object, if not, Access Denied
+                return res.status(403).json({
+                    data: {},
+                    error: "Access Denied"
+                });
+            } else {
+                return res.status(200).json({
+                    data: task,
+                    error: err2 ? err2.message : ""
+                })
+            }
+        } catch {
             return res.status(400).json({
                 data: {},
-                error: err1.message
+                error: err2.message
             });
-        }  
-
-        return res.status(200).json({
-            data: task,
-            error: err1 ? err1.message : ""
-        });
+        }
     });
 
     router.post('/', async (req, res) => {
@@ -47,7 +50,8 @@ const TaskController = (taskModel, authService) => {
         const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
         if (err1) {
             return res.status(400).json({
-                message: err1.message,
+                data: {},
+                error: err1.message,
             });
         }
 
