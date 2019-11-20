@@ -75,31 +75,39 @@ const TaskController = (taskModel, authService) => {
         return res.status(400).json({
             message: "Malformed Request"
         });
-    const body = req.body;
-    const ids = body.ids;
+        const body = req.body;
+        const ids = body.ids;
 
-    const promises = ids.map(id => taskModel.setTaskCompleted(id))
-    const rows = await Promise.all(promises)
-    console.log(rows)
-    let completed_arr = []
-    rows.forEach(t => {
-        if (t[1]) {
+        // check if the id object is empty
+        if(ids == undefined || ids.length == 0){
             return res.status(400).json({
-                "data": null,
-                "error": t[1].message,
-            })
+                data: null,
+                error: "Malformed Request"
+            });
         }
-        completed_arr.push(t[0])
-    });
 
-    
-    return res.status(200).json({
-        "data": completed_arr,
-        "error": '',
-    })
+        const promises = ids.map(id => taskModel.setTaskCompleted(id))
+        const rows = await Promise.all(promises)
+        console.log(rows)
+        let completed_arr = []
+        rows.forEach(t => {
+            if (t[1]) {
+                return res.status(400).json({
+                    "data": null,
+                    "error": t[1],
+                })
+            }
+            completed_arr.push(t[0])
+        });
+
+        
+        return res.status(200).json({
+            "data": completed_arr,
+            "error": '',
+        })
 
 
-    })
+        })
 
     return router;
 }

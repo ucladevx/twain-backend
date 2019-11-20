@@ -72,7 +72,9 @@ const TaskRepo = (postgres) => {
             const client = await postgres.connect(); //client is an object that has a connection to DB 
             const res = await client.query(setTaskCompleteSQL, values);
             client.release();
-            return [res.rows[0], null]; //requires null because no error in this case
+            if (res.rows[0] == undefined)
+                return [null, "Invalid ID"];
+            return [res.rows[0], ""]; //requires null because no error in this case
         }
         catch (err) {
             return [null, err]; // return null for the actual object, the error should not be null
