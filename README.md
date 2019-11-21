@@ -117,3 +117,28 @@ returns
   "error": "<ERROR_MESSAGE>"
 }
 ```
+
+### Set Tasks Complete by ID (Array of IDs) 
+POST /api/tasks/complete_task
+```
+{
+	"ids": [<array_of_task_ids>]
+}
+```
+returns
+```
+{
+    "data": [
+        {
+            "id": <event_id>,
+            "name": "<event_name>",
+            "description": "<event_description>",
+            "duration": <task_duration_in_seconds>,
+            "scheduled": <boolean>,
+            "completed": <boolean>,
+            "timecompleted": "<timestamp>"
+        }
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
