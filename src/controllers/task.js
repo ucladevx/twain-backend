@@ -29,10 +29,10 @@ const TaskController = (taskModel, authService) => {
                     error: err2 ? err2.message : ""
                 })
             }
-        } catch {
+        } catch(e) {
             return res.status(400).json({
                 data: {},
-                error: err2.message
+                error: e
             });
         }
     });
