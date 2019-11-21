@@ -7,7 +7,8 @@ const TaskRepo = (postgres) => {
             duration int NOT NULL, 
             scheduled boolean,
             completed boolean,
-            user_id text NOT NULL
+            user_id text NOT NULL,
+            timeCompleted timestamptz
         );
     `;
 
@@ -60,10 +61,33 @@ const TaskRepo = (postgres) => {
         }
     };
 
+    const setTaskCompleteSQL = `
+        UPDATE tasks SET completed=true, timeCompleted=CURRENT_TIMESTAMP
+        WHERE id=$1
+        RETURNING *;
+    `
+    const setTaskCompleted = async (taskID) => {
+        const values = [taskID];
+        try {
+            const client = await postgres.connect(); //client is an object that has a connection to DB 
+            const res = await client.query(setTaskCompleteSQL, values);
+            client.release();
+            if (res.rows[0] == undefined)
+                return [null, "Invalid ID"];
+            return [res.rows[0], ""]; //requires null because no error in this case
+        }
+        catch (err) {
+            return [null, err]; // return null for the actual object, the error should not be null
+        } 
+    }
+
+
+
     return {
         setupRepo,
         createTask,
-        getTaskByID
+        getTaskByID,
+        setTaskCompleted
     };
 }
 
