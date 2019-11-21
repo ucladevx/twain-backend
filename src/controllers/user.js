@@ -37,7 +37,6 @@ const UserController = (userModel, authService, googleAPIService) => {
       "message": "Malformed Request",
     });
     body = req.body
-    console.log(body)
 
     const token = body.token;
     const [data, err1] = await googleAPIService.getUserInfoWithToken(token);
