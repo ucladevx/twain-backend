@@ -39,7 +39,14 @@ const UserController = (userModel, authService, googleAPIService) => {
     body = req.body
 
     const token = body.token;
-    const data = await googleAPIService.getUserInfoWithToken(token);
+    const [data, err1] = await googleAPIService.getUserInfoWithToken(token);
+
+    if (err1) {
+      return res.status(400).json({
+        data: null,
+        message: err1.message,
+      });
+    }
 
     const first_name = data['given_name']
     const last_name = data['family_name']
@@ -47,7 +54,7 @@ const UserController = (userModel, authService, googleAPIService) => {
     const google_id = data['id']
     const pic_url = data['picture']
     
-    const [user, err] = await userModel.createUser(
+    const [user, err2] = await userModel.createUser(
       first_name,
       last_name,
       email,
@@ -55,12 +62,16 @@ const UserController = (userModel, authService, googleAPIService) => {
       pic_url,
     );
 
-    if (err) {
+    if (err2) {
       return res.status(400).json({
-        message: err.message,
+        data: null,
+        message: err2.message,
       });
     }
-    return res.status(200).json(user);
+    return res.status(200).json({
+      data: user,
+      message: '',
+    });
   });
 
   return router;

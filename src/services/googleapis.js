@@ -14,12 +14,10 @@ const GoogleAPIService = () => {
 
 		return await axiosInstance.get('/')
 		  .then(response => {
-			
-			return response.data
+			return [response.data, null]
 		  })
 		  .catch(error => {
-			console.log(error);
-			return null
+			return [null, error]
 		  });
 
 	};

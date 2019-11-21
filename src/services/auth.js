@@ -10,6 +10,9 @@ const AuthService = (userModel) => {
 	// sending the request. Returns [user_id, error] where user_id is an int
 	const getLoggedInUserID = async (header) => {
 		const auth_header = header['authorization']
+		if (auth_header == null) {
+			return [null, "No Authorization Received"]
+		}
 		const token = auth_header.slice(7)
 		const url_str = TOKEN_VERIFY_URL.concat(token)
 		
@@ -24,7 +27,6 @@ const AuthService = (userModel) => {
 			return [google_id, null]
 		  })
 		  .catch(error => {
-			console.log(error);
 			return [null, error]
 		  });
 
