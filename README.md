@@ -71,12 +71,21 @@ returns
 {
   "data": {
     "id": <task_id>,
+    "user_id": <TWAIN_USER_ID>
     "name": "<task_name>",
     "description": "<task_description>",
-    "duration": <task_duration_in_seconds>
-    "scheduled": <boolean>,
+    "duration": <task_duration_in_seconds>,
+    "due_date": <timestamp>,
     "completed": <boolean>,
-    "user_id": <TWAIN_USER_ID>
+    "completed_time": <timestamp>,
+    "scheduled": <boolean>,
+    "scheduled_time": <timestamp>,
+    "calendar_id" <google_calendar_id>,
+    "event_id": <google_event_id>, 
+    "start_time": <timestamp>,
+    "end_time": <timestamp>,
+    "created_time" <timestamp>,
+    "updated_time" <timestamp>
   },
   "error": "<ERROR_MESSAGE>"
 }
@@ -90,12 +99,21 @@ returns
 {
   "data": {
     "id": <task_id>,
+    "user_id": <TWAIN_USER_ID>
     "name": "<task_name>",
     "description": "<task_description>",
-    "duration": <task_duration_in_seconds>
-    "scheduled": <boolean>,
+    "duration": <task_duration_in_seconds>,
+    "due_date": <timestamp>,
     "completed": <boolean>,
-    "user_id": <TWAIN_USER_ID>
+    "completed_time": <timestamp>,
+    "scheduled": <boolean>,
+    "scheduled_time": <timestamp>,
+    "calendar_id" <google_calendar_id>,
+    "event_id": <google_event_id>, 
+    "start_time": <timestamp>,
+    "end_time": <timestamp>,
+    "created_time" <timestamp>,
+    "updated_time" <timestamp>
   },
   "error": "<ERROR_MESSAGE>"
 }
