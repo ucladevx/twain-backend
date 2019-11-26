@@ -69,6 +69,43 @@ const TaskController = (taskModel, authService) => {
         })
     })
 
+    router.get('/get_all_ids', async (req, res)=> {
+        if (!req.body)
+        return res.status(400).json({
+            message: "Malformed Request"
+        });
+        const body = req.body;
+        const user_id = body.user_id;
+        if (user_id == undefined){
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request"
+            });
+        }
+        let arr = [] //create array
+        const [task1, err1] = await taskModel.getAllScheduledTasks(user_id);
+        const [task2, err2] = await taskModel.getAllNotScheduledTasks(user_id);
+        if(err1 != null){
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Scheduled Task List",
+            });
+        }
+        if(err2 != null){
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Not Scheduled Task List",
+            });
+        }
+        return res.status(200).json({
+            "data": {
+                "not_scheduled": task2, 
+                "scheduled": task1,
+            },
+            "error": '',
+        });
+
+    })
 
     //my attempt to make a POST request for task-complete:
     router.post('/complete_task', async (req, res) =>{

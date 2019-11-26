@@ -89,13 +89,53 @@ const TaskRepo = (postgres) => {
         } 
     }
 
+    const getAllScheduledTasksSQL = `
+        SELECT * FROM tasks WHERE user_id=$4 AND scheduled=TRUE;
+    `;
+    const getAllScheduledTasks = async (userID) => {
+        const values = [userID];
+        try{
+            const client = await postgres.connect();
+            const res = await client.query(getTaskByIDSQL, values);
+            client.release();
+            if(res.rows[0] == undefined)
+                return [null, "User ID does not exist"]
+            return [res.rows[0], ""]; // error message is empty string
+        }
+        catch (err) {
+            return [null, err]; // return null  for the data if user's tasks DNE
+        }
+    }
+    const getAllNotScheduledTasksSQL = `
+        SELECT * FROM tasks WHERE user_id=$4 AND scheduled = FALSE;
+    `;
+    const getAllNotScheduledTasks = async (userID) => {
+        const values = [userID];
+        try{
+            const client = await postgres.connect();
+            const res = await client.query(getTaskByIDSQL, values);
+            client.release();
+            if(res.rows[0] == undefined)
+                return [null, "User ID does not exist"]
+            return [res.rows[0], ""]; // error message is empty string 
+        }
+        catch (err) {
+            return [null, err]; // return null  for the data if user's tasks DNE
+        }
+    }
+
+
+
+
 
 
     return {
         setupRepo,
         createTask,
         getTaskByID,
-        setTaskCompleted
+        setTaskCompleted,
+        getAllNotScheduledTasks,
+        getAllScheduledTasks
     };
 }
 
