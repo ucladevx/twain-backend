@@ -1,7 +1,7 @@
 const TaskModel = (repo) => {
     // Creates a task object with the specified fields
-    const createTask = async (name, description, duration, user_id) => {
-        return repo.createTask(name, description, duration, user_id);
+    const createTask = async (name, description, duration, due_date, user_id) => {
+        return repo.createTask(name, description, duration, due_date, user_id);
     };
 
     // Gets a task object by ID
