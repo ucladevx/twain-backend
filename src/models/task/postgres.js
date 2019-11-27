@@ -70,7 +70,7 @@ const TaskRepo = (postgres) => {
     };
 
     const setTaskCompleteSQL = `
-        UPDATE tasks SET completed=true, completed_time=CURRENT_TIMESTAMP, updated_time=CURRENT_TIMESTAMP,
+        UPDATE tasks SET completed=true, completed_time=CURRENT_TIMESTAMP, updated_time=CURRENT_TIMESTAMP
         WHERE id=$1
         RETURNING *;
     `
