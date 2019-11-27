@@ -21,6 +21,8 @@ const {TaskRepo} = require('./models/task/postgres');
 const {TaskModel} = require('./models/task');
 const {TaskController} = require('./controllers/task');
 
+const {ScheduleController} = require('./controllers/schedule');
+
 const {AuthService} = require('./services/auth')
 const {GoogleAPIService} = require('./services/googleapis')
 
@@ -45,6 +47,8 @@ function start(port) {
   const taskModel = TaskModel(taskRepo);
   const taskController = TaskController(taskModel, authService);
 
+  const scheduleController = ScheduleController(taskModel, authService);
+
   const app = express();
   app.disable('x-powered-by');
   app.use(compression());
@@ -62,6 +66,7 @@ function start(port) {
   router.use('/users', userController);
   router.use('/events', eventController);
   router.use('/tasks', taskController);
+  router.use('/schedule', scheduleController);
 
   app.use('/api', router);
 
