@@ -2,21 +2,13 @@ const TaskRepo = (postgres) => {
     const createTaskTableSQL = `
         CREATE TABLE IF NOT EXISTS tasks(
             id SERIAL PRIMARY KEY,
-            user_id text NOT NULL,
             name text NOT NULL,
             description text, 
-            duration int NOT NULL,
-            due_date timestamptz NOT NULL,
-            completed boolean,
-            completed_time timestamp, 
+            duration int NOT NULL, 
             scheduled boolean,
-            scheduled_time timestamp,
-            calendar_id text,
-            event_id text,
-            start_time timestamp,
-            end_time timestamp,
-            created_time timestamp DEFAULT NOW(),
-            updated_time timestamp DEFAULT NOW()
+            completed boolean,
+            user_id text NOT NULL,
+            timeCompleted timestamptz
         );
     `;
 
@@ -34,13 +26,13 @@ const TaskRepo = (postgres) => {
     }
 
     const createTaskSQL = `
-        INSERT INTO tasks(name, description, duration, due_date, scheduled, completed, user_id)
-        VALUES ($1, $2, $3, $4, FALSE, FALSE, $5)
+        INSERT INTO tasks(name, description, duration, scheduled, completed, user_id)
+        VALUES ($1, $2, $3, FALSE, FALSE, $4)
         RETURNING *;
     `;
 
-    const createTask = async (name, description, duration, due_date, user_id) => {
-        const values = [name, description, duration, due_date, user_id];
+    const createTask = async (name, description, duration, user_id) => {
+        const values = [name, description, duration, user_id];
         try {
             const client = await postgres.connect();
             const res = await client.query(createTaskSQL, values);
@@ -58,6 +50,7 @@ const TaskRepo = (postgres) => {
 
     const getTaskByID = async (id) => {
         const values = [id];
+        console.log("Bad spot")
         try {
             const client = await postgres.connect();
             const res = await client.query(getTaskByIDSQL, values);
@@ -90,37 +83,37 @@ const TaskRepo = (postgres) => {
     }
 
     const getAllScheduledTasksSQL = `
-        SELECT * FROM tasks WHERE user_id=$4 AND scheduled=TRUE;
+        SELECT * FROM tasks WHERE user_id=$1 AND scheduled=TRUE;
     `;
     const getAllScheduledTasks = async (userID) => {
         const values = [userID];
         try{
             const client = await postgres.connect();
-            const res = await client.query(getTaskByIDSQL, values);
+            const res = await client.query(getAllScheduledTasksSQL, values);
             client.release();
             if(res.rows[0] == undefined)
                 return [null, "User ID does not exist"]
             return [res.rows[0], ""]; // error message is empty string
         }
         catch (err) {
-            return [null, err]; // return null  for the data if user's tasks DNE
+            return [null, "Error at Scheduled"]; // return null  for the data if user's tasks DNE
         }
     }
     const getAllNotScheduledTasksSQL = `
-        SELECT * FROM tasks WHERE user_id=$4 AND scheduled = FALSE;
+        SELECT * FROM tasks WHERE user_id=$1 AND scheduled = FALSE;
     `;
     const getAllNotScheduledTasks = async (userID) => {
         const values = [userID];
         try{
             const client = await postgres.connect();
-            const res = await client.query(getTaskByIDSQL, values);
+            const res = await client.query(getAllNotScheduledTasksSQL, values);
             client.release();
             if(res.rows[0] == undefined)
                 return [null, "User ID does not exist"]
             return [res.rows[0], ""]; // error message is empty string 
         }
         catch (err) {
-            return [null, err]; // return null  for the data if user's tasks DNE
+            return [null, "Error at Not Scheduled"]; // return null  for the data if user's tasks DNE
         }
     }
 
