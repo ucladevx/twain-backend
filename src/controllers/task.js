@@ -22,13 +22,13 @@ const TaskController = (taskModel, authService) => {
         if(err1 != null){
             return res.status(400).json({
                 "data": null,
-                "error": "Malformed Request in Scheduled Task List",
+                "error": "Malformed Request in Scheduled Task List: " + err1,
             });
         }
         if(err2 != null){
             return res.status(400).json({
                 "data": null,
-                "error": "Malformed Request in Not Scheduled Task List",
+                "error": "Malformed Request in Not Scheduled Task List: " + err2,
             });
         }
         return res.status(200).json({
