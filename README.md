@@ -179,13 +179,13 @@ returns
             "timecompleted": "<timestamp>"
         },
         {
-            "id2": <event_id2>,
-            "name2": "<event_name2>",
-            "description2": "<event_description2>",
-            "duration2": <task_duration_in_seconds2>,
-            "scheduled2": <boolean2>,
-            "completed2": <boolean2>,
-            "timecompleted2": "<timestamp2>"
+            "id": <event_id2>,
+            "name": "<event_name2>",
+            "description": "<event_description2>",
+            "duration": <task_duration_in_seconds2>,
+            "scheduled": <boolean2>,
+            "completed": <boolean2>,
+            "timecompleted": "<timestamp2>"
         }
     ],
     "error": "<ERROR_MESSAGE>"
