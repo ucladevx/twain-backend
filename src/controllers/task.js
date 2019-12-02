@@ -3,13 +3,11 @@ const TaskController = (taskModel, authService) => {
     const router = express.Router();
 
     router.get('/me', async (req, res)=> {
-        console.log('hello');
         if (!req.headers)
             return res.status(400).json({
                 message: "Malformed Request"
             });
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        console.log(user_id);
         if (user_id == undefined){
             return res.status(400).json({
                 data: null,
@@ -44,7 +42,7 @@ const TaskController = (taskModel, authService) => {
     router.get('/:id', async (req, res) => {
         const params = req.params;
         const id = parseInt(params.id, 10);
-        console.log("ID: " + id)
+
         // Get the user_id of the user sending the request
         const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
         if (err1) {
@@ -52,7 +50,6 @@ const TaskController = (taskModel, authService) => {
                 message: err1.message,
             });
         }
-        console.log("in getbyid task controller")
         const [task, err2] = await taskModel.getTask(id);
     
         try {
