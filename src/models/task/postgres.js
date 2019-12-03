@@ -58,7 +58,6 @@ const TaskRepo = (postgres) => {
 
     const getTaskByID = async (id) => {
         const values = [id];
-        console.log("Bad spot")
         try {
             const client = await postgres.connect();
             const res = await client.query(getTaskByIDSQL, values);
