@@ -23,13 +23,18 @@ const TaskModel = (repo) => {
         const [task, err] = await repo.getAllNotScheduledTasks(userID);
         return [task, err];
     }
+    const scheduleTask = async (task_id, event_id, calendar_id, start_time, end_time) => {
+        const [task, err] = await repo.scheduleTask(task_id, event_id, calendar_id, start_time, end_time);
+        return [task, err];
+    }
 
     return {
         createTask,
         getTask, 
         setTaskCompleted,
         getAllScheduledTasks,
-        getAllNotScheduledTasks
+        getAllNotScheduledTasks,
+        scheduleTask,
     };
 }
 

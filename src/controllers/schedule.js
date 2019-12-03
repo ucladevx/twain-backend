@@ -100,11 +100,16 @@ const ScheduleController = (taskModel, authService) => {
         for (calendar of calendar_ids) {
             freebusy_list.push({id: calendar});
         } 
+        let today_str = new Date(Date.now()).toISOString()
+        let due = tasks[0].due_date
+
+        console.log(today_str)
+        console.log(due)
 
         const [busy_intervals, err4] = await axios.post('https://www.googleapis.com/calendar/v3/freeBusy',
             { 
-                timeMin: yesterday.toISOString(), 
-                timeMax: tomorrow.toISOString(), 
+                timeMin: today_str,
+                timeMax: due,
                 items: freebusy_list 
             },
             {
@@ -177,22 +182,23 @@ const ScheduleController = (taskModel, authService) => {
                 free_times.push([unavailable_times[i - 1][1], unavailable_times[i][0]]);
             }
         }
+        console.log(free_times)
 
         // creates an event
         // TODO: multiple events and updating the free time availability as we schedule
+        let google_event_response = null
         for (task of tasks) {
             for (i = 0; i < free_times.length; i++) {
-                console.log(Math.round((free_times[i][1] - free_times[i][0]) / 1000));
-                console.log(task.duration);
-                if (Math.round((free_times[i][1] - free_times[i][0]) / 1000) >= task.duration) {
-                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/' + calendar_ids[0] + '/events/',
+                let free_dur = Math.round((free_times[i][1] - free_times[i][0]) / 1000)  
+                if (free_dur >= task.duration) {
+                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/longerbeamalex@gmail.com/events/',
                         {
                             start: {
-                                dateTime: free_times[i][0].toISOString()
+                                dateTime: free_times[i][0]
                             },
                             end: {
                                 // TODO: make it end after the specified duration
-                                dateTime: free_times[i][1].toISOString()
+                                dateTime: free_times[i][1]
                             },
                             summary: task.name, 
                             description: task.description
@@ -210,16 +216,28 @@ const ScheduleController = (taskModel, authService) => {
                             return [null, error];
                         });
                 
-                    if (!err5)
+                    if (!err5) {
+                        google_event_response = response
                         break;
+                    } else {
+                        console.log("error: " + err5.message)
+                    }
 
                 }
             }
         }
+        let event_data = google_event_response.data
+        console.log(event_data)
+        let t = tasks[0]
+        let event_id = event_data.id
+        let calendar_id = "longerbeamalex@gmail.com"
+        let event_start_time = event_data.start.dateTime
+        let event_end_time = event_data.end.dateTime
 
+        const [final_task, last_err] = await taskModel.scheduleTask(t.id, event_id, calendar_id, event_start_time, event_end_time)
         return res.status(200).json({
-            data: "Success",
-            error: null
+            data: final_task,
+            error: last_err
         })
         
     });
