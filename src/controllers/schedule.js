@@ -182,6 +182,9 @@ const ScheduleController = (taskModel, authService) => {
             let busy_start = new Date(unavailable_times[i][0])
             let busy_end = new Date(unavailable_times[i][1])
 
+            let busy_start_string = busy_start.toISOString()
+            let busy_end_string = busy_end.toISOString()
+
             busy_start_hours = busy_start.getUTCHours()
             busy_end_hours = busy_end.getUTCHours()
             if (i == 0) {
@@ -192,12 +195,12 @@ const ScheduleController = (taskModel, authService) => {
                     if (busy_start_hours >= day_start_hours) {
                         let f_start = new Date(busy_start).setUTCHours(day_start_hours)
                         f_start_string = new Date(f_start).toISOString()
-                        free_times.push([f_start_string, busy_start]);
+                        free_times.push([f_start_string, busy_start_string]);
                     } else {
                         t = new Date(busy_start).setUTCHours(day_start_hours)
                         let f_start = new Date(Date.parse(t) - 24*60*60*1000)
                         f_start_string = new Date(f_start).toISOString()
-                        free_times.push([f_start_string, busy_start]);
+                        free_times.push([f_start_string, busy_start_string]);
                     }
                 }
             } 
@@ -220,6 +223,7 @@ const ScheduleController = (taskModel, authService) => {
             // }
              else {
                 last_busy_end = new Date(unavailable_times[i-1][1])
+                last_busy_end_string = last_busy_end.toISOString()
 
                 last_busy_end_hours = last_busy_end.getUTCHours()
                 date_diff = busy_start.getUTCDate() - last_busy_end.getUTCDate()
@@ -233,17 +237,17 @@ const ScheduleController = (taskModel, authService) => {
                     // last_busy_end_hours > day_end and start_time < day_start
                     if (last_busy_end_hours >= day_start_hours && busy_start_hours <= day_end_hours) {
                         // Normal interval
-                        interval = [last_busy_end, busy_start]
+                        interval = [last_busy_end_string, busy_start_string]
                     } else if (last_busy_end_hours >= day_start_hours && busy_start_hours >= day_end_hours) {
                          // last busy end until start_time_day at day_end
                          f_end = new Date(busy_start).setUTCHours(day_end_hours)
                          f_end_string = new Date(f_end).toISOString()
-                         interval = [last_busy_end, f_end_string]
+                         interval = [last_busy_end_string, f_end_string]
                      } else if (last_busy_end_hours <= day_start_hours && busy_start_hours <= day_end_hours) {
                         // last_busy_end day at day_start until start_time
                         f_start = new Date(last_busy_end).setUTCHours(day_start_hours)
                         f_start_string = new Date(f_start).toISOString()
-                        interval = [f_start_string, busy_start]
+                        interval = [f_start_string, busy_start_string]
                      } else if (last_busy_end_hours <= day_start_hours && busy_start_hours >= day_end_hours) {
                         // last_busy_end day at day_start until start_time day at day_end
                         // Full day free case
@@ -257,12 +261,12 @@ const ScheduleController = (taskModel, authService) => {
                 } else { // Date_diff == 0
                     if (last_busy_end_hours <= day_end_hours && busy_start_hours <= day_end_hours) {
                         // normal interval
-                        interval = [last_busy_end, busy_start]
+                        interval = [last_busy_end_string, busy_start_string]
                     } else if (last_busy_end_hours <= day_end_hours && busy_start_hours >= day_end_hours && busy_start_hours <= day_start_hours) {
                         // last_busy_end until same day at day_end
                         f_end = new Date(last_busy_end).setUTCHours(day_end_hours)
                         f_end_string = new Date(f_end).toISOString()
-                        interval = [last_busy_end, f_end_string]
+                        interval = [last_busy_end_string, f_end_string]
                     } else if (last_busy_end_hours <= day_end_hours && busy_start_hours >= day_start_hours) {
                         // Two intervals, end of one day and beginning of next
                         f_start = new Date(busy_start).setUTCHours(day_start_hours)
@@ -270,18 +274,18 @@ const ScheduleController = (taskModel, authService) => {
 
                         f_end = new Date(last_busy_end).setUTCHours(day_end_hours)
                         f_end_string = new Date(f_end).toISOString()
-                        console.log("Extra push: " + [last_busy_end, f_end_string])
-                        free_times.push([last_busy_end, f_end_string])
-                        interval = [f_start_string, busy_start]
+                        console.log("Extra push: " + [last_busy_end_string, f_end_string])
+                        free_times.push([last_busy_end_string, f_end_string])
+                        interval = [f_start_string, busy_start_string]
                     } else if (last_busy_end_hours <= day_start_hours && busy_start_hours >= day_start_hours) {
                         f_start = new Date(busy_start).setUTCHours(day_start_hours)
                         f_start_string = new Date(f_start).toISOString()
 
-                        interval = [f_start_string, busy_start]
+                        interval = [f_start_string, busy_start_string]
                     } else if (last_busy_end_hours >= day_start_hours && busy_start_hours >= day_start_hours) {
                         // Normal interval
                         console.log("Day 0 normal with i=" + i)
-                        interval = [last_busy_end, busy_start]
+                        interval = [last_busy_end_string, busy_start_string]
                     } else {
                         // Both between day_end and day_start
                         // nothing
@@ -299,7 +303,7 @@ const ScheduleController = (taskModel, authService) => {
         let google_event_response = null
         for (task of tasks) {
             for (i = 0; i < free_times.length; i++) {
-                let free_dur = Math.round((free_times[i][1] - free_times[i][0]) / 1000)  
+                let free_dur = Math.round((new Date(free_times[i][1]) - new Date(free_times[i][0])) / 1000)  
                 if (free_dur >= (task.duration * 60)) {
                     end_time_iso_str = new Date(Date.parse(free_times[i][0]) + task.duration * 60000).toISOString();
             
