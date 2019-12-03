@@ -100,7 +100,7 @@ const ScheduleController = (taskModel, authService) => {
         for (calendar of calendar_ids) {
             freebusy_list.push({id: calendar});
         } 
-        let today_str = new Date(Date.now()).toISOString()
+        let today_str = today.toISOString()
         let due = tasks[0].due_date
 
         console.log(today_str)
@@ -163,7 +163,7 @@ const ScheduleController = (taskModel, authService) => {
         let day_start = new Date();
         day_start = today.setHours(8, 0, 0, 0);
         let day_end = new Date();
-        day_end = today.setHours(16, 0, 0, 0);
+        day_end = today.setHours(20, 0, 0, 0);
 
         // get the times the user is free
         let free_times = [];
@@ -177,7 +177,7 @@ const ScheduleController = (taskModel, authService) => {
                 if (unavailable_times[i][0] >= day_end)
                     continue;
                 else
-                    free_times.push([unavailable_times[i][0], day_end]);
+                    free_times.push([unavailable_times[i][0], day_end.toISOString()]);
             } else {
                 free_times.push([unavailable_times[i - 1][1], unavailable_times[i][0]]);
             }
@@ -191,14 +191,15 @@ const ScheduleController = (taskModel, authService) => {
             for (i = 0; i < free_times.length; i++) {
                 let free_dur = Math.round((free_times[i][1] - free_times[i][0]) / 1000)  
                 if (free_dur >= task.duration) {
-                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/longerbeamalex@gmail.com/events/',
+                    end_time_iso_str = new Date(Date.parse(free_times[i][0]) + task.duration * 1000).toISOString();
+                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/jj11d7t@gmail.com/events/',
                         {
                             start: {
                                 dateTime: free_times[i][0]
                             },
                             end: {
                                 // TODO: make it end after the specified duration
-                                dateTime: free_times[i][1]
+                                dateTime: end_time_iso_str
                             },
                             summary: task.name, 
                             description: task.description
@@ -230,7 +231,7 @@ const ScheduleController = (taskModel, authService) => {
         console.log(event_data)
         let t = tasks[0]
         let event_id = event_data.id
-        let calendar_id = "longerbeamalex@gmail.com"
+        let calendar_id = "jj11d7t@gmail.com"
         let event_start_time = event_data.start.dateTime
         let event_end_time = event_data.end.dateTime
 
