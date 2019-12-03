@@ -27,6 +27,7 @@ const ScheduleController = (taskModel, authService) => {
                 error: err1.message,
             });
         }
+        console.log("User: " + user_id_from_request)
 
         // Get requested tasks
         const promises = ids.map(id => taskModel.getTask(id));
@@ -59,6 +60,7 @@ const ScheduleController = (taskModel, authService) => {
             }
             tasks.push(task);
         });
+        console.log("Task: " + tasks[0].id)
 
         // Get the user's calendars
         const auth_header = req.headers['authorization'];
@@ -138,6 +140,8 @@ const ScheduleController = (taskModel, authService) => {
 
         if (err4) 
             return [null, err4];
+        console.log("Busy times: ")
+        
 
         // sorts them by start time, ascending
         busy_intervals.sort((a, b) => {
@@ -160,26 +164,132 @@ const ScheduleController = (taskModel, authService) => {
             unavailable_times.push([start_time, end_time]);
         }
 
-        let day_start = new Date();
-        day_start = today.setHours(8, 0, 0, 0);
-        let day_end = new Date();
-        day_end = today.setHours(20, 0, 0, 0);
+        console.log(unavailable_times)
+
+        // let day_start = new Date();
+        // day_start = today.setHours(0, 0, 0, 0);
+        // let day_end = new Date();
+        // day_end = today.setHours(12, 0, 0, 0);
+
+        let day_start_hours = 16
+        let day_end_hours = 4
 
         // get the times the user is free
+        let num_unavailable = unavailable_times.length;
+        console.log(num_unavailable)
         let free_times = [];
-        for (i = 0; i < unavailable_times.length; i++) {
+        for (i = 0; i < num_unavailable; i++) {
+            let busy_start = new Date(unavailable_times[i][0])
+            let busy_end = new Date(unavailable_times[i][1])
+
+            busy_start_hours = busy_start.getUTCHours()
+            busy_end_hours = busy_end.getUTCHours()
             if (i == 0) {
-                if (unavailable_times[i][0] <= day_start)
+                if (busy_start_hours <= day_start_hours)
                     continue;
-                else 
-                    free_times.push([day_start, unavailable_times[i][0]]);
-            } else if (i == unavailable_times.length - 1) {
-                if (unavailable_times[i][0] >= day_end)
-                    continue;
-                else
-                    free_times.push([unavailable_times[i][0], day_end.toISOString()]);
-            } else {
-                free_times.push([unavailable_times[i - 1][1], unavailable_times[i][0]]);
+                else {
+                    // Find current day start
+                    if (busy_start_hours >= day_start_hours) {
+                        let f_start = new Date(busy_start).setUTCHours(day_start_hours)
+                        f_start_string = new Date(f_start).toISOString()
+                        free_times.push([f_start_string, busy_start]);
+                    } else {
+                        t = new Date(busy_start).setUTCHours(day_start_hours)
+                        let f_start = new Date(Date.parse(t) - 24*60*60*1000)
+                        f_start_string = new Date(f_start).toISOString()
+                        free_times.push([f_start_string, busy_start]);
+                    }
+                }
+            } 
+            // Ideally the last interval does everything in the final else as well as the final interval below
+            // Commenting out for now until we figure out exactly what due dates look like
+            // else if (i == unavailable_times.length - 1) {
+            //     if (busy_end_hours >= day_end_hours && busy_end_hours >= day_start_hours)
+            //         continue;
+            //     else {
+            //         // Find current day end
+            //         if (busy_end_hours <= day_end_hours) {
+            //             f_end = new Date(busy_end).setUTCHours(day_end_hours)
+            //             free_times.push([busy_end, f_end]);
+            //         } else {
+            //             t = new Date(busy_end).setUTCHours(day_end_hours)
+            //             f_end = new Date(Date.parse(t) + 24*60*60*1000)
+            //             free_times.push([busy_end, f_end]);
+            //         }
+            //     }
+            // }
+             else {
+                last_busy_end = new Date(unavailable_times[i-1][1])
+
+                last_busy_end_hours = last_busy_end.getUTCHours()
+                date_diff = busy_start.getUTCDate() - last_busy_end.getUTCDate()
+                console.log("START NEW **** with i=" + i)
+                console.log("Last Busy End Hours: " + last_busy_end_hours)
+                console.log("Busy Start Hours: " + busy_start_hours)
+                console.log("date diff: " + date_diff)
+                // IF DATE DIFF == 1
+                let interval = [0,0]
+                if (date_diff == 1) {
+                    // last_busy_end_hours > day_end and start_time < day_start
+                    if (last_busy_end_hours >= day_start_hours && busy_start_hours <= day_end_hours) {
+                        // Normal interval
+                        interval = [last_busy_end, busy_start]
+                    } else if (last_busy_end_hours >= day_start_hours && busy_start_hours >= day_end_hours) {
+                         // last busy end until start_time_day at day_end
+                         f_end = new Date(busy_start).setUTCHours(day_end_hours)
+                         f_end_string = new Date(f_end).toISOString()
+                         interval = [last_busy_end, f_end_string]
+                     } else if (last_busy_end_hours <= day_start_hours && busy_start_hours <= day_end_hours) {
+                        // last_busy_end day at day_start until start_time
+                        f_start = new Date(last_busy_end).setUTCHours(day_start_hours)
+                        f_start_string = new Date(f_start).toISOString()
+                        interval = [f_start_string, busy_start]
+                     } else if (last_busy_end_hours <= day_start_hours && busy_start_hours >= day_end_hours) {
+                        // last_busy_end day at day_start until start_time day at day_end
+                        // Full day free case
+                        f_start = new Date(last_busy_end).setUTCHours(day_start_hours)
+                        f_start_string = new Date(f_start).toISOString()
+
+                        f_end = new Date(busy_start).setUTCHours(day_end_hours)
+                        f_end_string = new Date(f_end).toISOString()
+                        interval = [f_start_string, f_end_string]
+                     }
+                } else { // Date_diff == 0
+                    if (last_busy_end_hours <= day_end_hours && busy_start_hours <= day_end_hours) {
+                        // normal interval
+                        interval = [last_busy_end, busy_start]
+                    } else if (last_busy_end_hours <= day_end_hours && busy_start_hours >= day_end_hours && busy_start_hours <= day_start_hours) {
+                        // last_busy_end until same day at day_end
+                        f_end = new Date(last_busy_end).setUTCHours(day_end_hours)
+                        f_end_string = new Date(f_end).toISOString()
+                        interval = [last_busy_end, f_end_string]
+                    } else if (last_busy_end_hours <= day_end_hours && busy_start_hours >= day_start_hours) {
+                        // Two intervals, end of one day and beginning of next
+                        f_start = new Date(busy_start).setUTCHours(day_start_hours)
+                        f_start_string = new Date(f_start).toISOString()
+
+                        f_end = new Date(last_busy_end).setUTCHours(day_end_hours)
+                        f_end_string = new Date(f_end).toISOString()
+                        console.log("Extra push: " + [last_busy_end, f_end_string])
+                        free_times.push([last_busy_end, f_end_string])
+                        interval = [f_start_string, busy_start]
+                    } else if (last_busy_end_hours <= day_start_hours && busy_start_hours >= day_start_hours) {
+                        f_start = new Date(busy_start).setUTCHours(day_start_hours)
+                        f_start_string = new Date(f_start).toISOString()
+
+                        interval = [f_start_string, busy_start]
+                    } else if (last_busy_end_hours >= day_start_hours && busy_start_hours >= day_start_hours) {
+                        // Normal interval
+                        console.log("Day 0 normal with i=" + i)
+                        interval = [last_busy_end, busy_start]
+                    } else {
+                        // Both between day_end and day_start
+                        // nothing
+                        continue;
+                    }                
+                }
+                console.log("pushing interval: " + interval)
+                free_times.push(interval)
             }
         }
         console.log(free_times)
@@ -190,9 +300,12 @@ const ScheduleController = (taskModel, authService) => {
         for (task of tasks) {
             for (i = 0; i < free_times.length; i++) {
                 let free_dur = Math.round((free_times[i][1] - free_times[i][0]) / 1000)  
-                if (free_dur >= task.duration) {
-                    end_time_iso_str = new Date(Date.parse(free_times[i][0]) + task.duration * 1000).toISOString();
-                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/jj11d7t@gmail.com/events/',
+                if (free_dur >= (task.duration * 60)) {
+                    end_time_iso_str = new Date(Date.parse(free_times[i][0]) + task.duration * 60000).toISOString();
+            
+                    console.log("End time")
+                    console.log(end_time_iso_str)
+                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/longerbeamalex@gmail.com/events/',
                         {
                             start: {
                                 dateTime: free_times[i][0]
@@ -231,9 +344,9 @@ const ScheduleController = (taskModel, authService) => {
         console.log(event_data)
         let t = tasks[0]
         let event_id = event_data.id
-        let calendar_id = "jj11d7t@gmail.com"
-        let event_start_time = event_data.start.dateTime
-        let event_end_time = event_data.end.dateTime
+        let calendar_id = "longerbeamalex@gmail.com"
+        let event_start_time = new Date(event_data.start.dateTime).toISOString()
+        let event_end_time = new Date(event_data.end.dateTime).toISOString()
 
         const [final_task, last_err] = await taskModel.scheduleTask(t.id, event_id, calendar_id, event_start_time, event_end_time)
         return res.status(200).json({
