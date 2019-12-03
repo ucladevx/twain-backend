@@ -36,7 +36,6 @@ const TaskController = (taskModel, authService) => {
             },
             "error": '',
         });
-
     })
 
     router.get('/:id', async (req, res) => {
