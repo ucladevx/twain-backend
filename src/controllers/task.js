@@ -105,8 +105,6 @@ const TaskController = (taskModel, authService) => {
         })
     })
 
-    
-
     //my attempt to make a POST request for task-complete:
     router.post('/complete_task', async (req, res) =>{
         if (!req.body)
