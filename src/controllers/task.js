@@ -2,6 +2,42 @@ const express = require('express');
 const TaskController = (taskModel, authService) => {
     const router = express.Router();
 
+    router.get('/me', async (req, res)=> {
+        if (!req.headers)
+            return res.status(400).json({
+                message: "Malformed Request"
+            });
+        const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
+        if (user_id == undefined){
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request. " + user_err
+            });
+        }
+        let arr = [] //create array
+        const [task1, err1] = await taskModel.getAllScheduledTasks(user_id);
+        const [task2, err2] = await taskModel.getAllNotScheduledTasks(user_id);
+        if(err1 != null){
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Scheduled Task List: " + err1,
+            });
+        }
+        if(err2 != null){
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Not Scheduled Task List: " + err2,
+            });
+        }
+        return res.status(200).json({
+            "data": {
+                "not_scheduled": task2, 
+                "scheduled": task1,
+            },
+            "error": '',
+        });
+    })
+
     router.get('/:id', async (req, res) => {
         const params = req.params;
         const id = parseInt(params.id, 10);
@@ -13,7 +49,6 @@ const TaskController = (taskModel, authService) => {
                 message: err1.message,
             });
         }
-
         const [task, err2] = await taskModel.getTask(id);
     
         try {
@@ -68,7 +103,6 @@ const TaskController = (taskModel, authService) => {
             error: err2 ? err.message : ""
         })
     })
-
 
     //my attempt to make a POST request for task-complete:
     router.post('/complete_task', async (req, res) =>{

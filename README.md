@@ -119,6 +119,114 @@ returns
 }
 ```
 
+### Get all tasks for a user
+GET /api/tasks/me
+
+returns
+```
+{
+  "data": {
+    "not_scheduled": [
+      {
+	    "id": <task_id>,
+	    "user_id": <TWAIN_USER_ID>
+	    "name": "<task_name>",
+	    "description": "<task_description>",
+	    "duration": <task_duration_in_seconds>,
+	    "due_date": <timestamp>,
+	    "completed": <boolean>,
+	    "completed_time": <timestamp>,
+	    "scheduled": <boolean>,
+	    "scheduled_time": <timestamp>,
+	    "calendar_id" <google_calendar_id>,
+	    "event_id": <google_event_id>, 
+	    "start_time": <timestamp>,
+	    "end_time": <timestamp>,
+	    "created_time" <timestamp>,
+	    "updated_time" <timestamp>
+      },
+      ...
+    ], 
+    "scheduled": [
+      {
+	    "id": <task_id>,
+	    "user_id": <TWAIN_USER_ID>
+	    "name": "<task_name>",
+	    "description": "<task_description>",
+	    "duration": <task_duration_in_seconds>,
+	    "due_date": <timestamp>,
+	    "completed": <boolean>,
+	    "completed_time": <timestamp>,
+	    "scheduled": <boolean>,
+	    "scheduled_time": <timestamp>,
+	    "calendar_id" <google_calendar_id>,
+	    "event_id": <google_event_id>, 
+	    "start_time": <timestamp>,
+	    "end_time": <timestamp>,
+	    "created_time" <timestamp>,
+	    "updated_time" <timestamp>
+      },
+      ...
+    ]
+  },
+  "error": "<ERROR_MESSAGE>"
+}
+```
+**Note:** 
+  *`not_scheduled` is ordered by most recently added at the top
+  *`scheduled` is ordered by increasing chronological order
+
+### Set Tasks Complete by ID (Array of IDs) 
+POST /api/tasks/complete_task
+```
+{
+	"ids": [<array_of_task_ids>]
+}
+```
+returns
+```
+{
+    "data": [
+        {
+            "id": <event_id>,
+            "name": "<event_name>",
+            "description": "<event_description>",
+            "duration": <task_duration_in_seconds>,
+	    "due_date": <timestamp>,
+	    "completed": <boolean>,
+	    "completed_time": <timestamp>,
+	    "scheduled": <boolean>,
+	    "scheduled_time": <timestamp>,
+	    "calendar_id" <google_calendar_id>,
+	    "event_id": <google_event_id>, 
+	    "start_time": <timestamp>,
+	    "end_time": <timestamp>,
+	    "created_time" <timestamp>,
+	    "updated_time" <timestamp>
+        },
+        {
+            "id": <event_id>,
+            "name": "<event_name>",
+            "description": "<event_description>",
+            "duration": <task_duration_in_seconds>,
+	    "due_date": <timestamp>,
+	    "completed": <boolean>,
+	    "completed_time": <timestamp>,
+	    "scheduled": <boolean>,
+	    "scheduled_time": <timestamp>,
+	    "calendar_id" <google_calendar_id>,
+	    "event_id": <google_event_id>, 
+	    "start_time": <timestamp>,
+	    "end_time": <timestamp>,
+	    "created_time" <timestamp>,
+	    "updated_time" <timestamp>
+        },
+	...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
 ### Create Event
 POST /api/events/
 ```
@@ -153,36 +261,4 @@ returns
 }
 ```
 
-### Set Tasks Complete by ID (Array of IDs) 
-POST /api/tasks/complete_task
-```
-{
-	"ids": [<array_of_task_ids>]
-}
-```
-returns
-```
-{
-    "data": [
-        {
-            "id": <event_id>,
-            "name": "<event_name>",
-            "description": "<event_description>",
-            "duration": <task_duration_in_seconds>,
-            "scheduled": <boolean>,
-            "completed": <boolean>,
-            "timecompleted": "<timestamp>"
-        },
-        {
-            "id2": <event_id2>,
-            "name2": "<event_name2>",
-            "description2": "<event_description2>",
-            "duration2": <task_duration_in_seconds2>,
-            "scheduled2": <boolean2>,
-            "completed2": <boolean2>,
-            "timecompleted2": "<timestamp2>"
-        }
-    ],
-    "error": "<ERROR_MESSAGE>"
-}
-```
+
