@@ -30,10 +30,15 @@ const UserModel = (repo) => {
     return await repo.getUser(id);
   };
 
+  const setHours = async(start_hour, end_hour, id) => {
+    return await repo.setHours(start_hour, end_hour, id);
+  }
+
   return {
     createUser,
     getUserIDByGoogleID,
     getUser,
+    setHours,
   };
 };
 

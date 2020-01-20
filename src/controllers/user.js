@@ -11,7 +11,7 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     if (err1) {
       return res.status(400).json({
-        message: err.message,
+        message: err1.message,
       });
     } else if (user_id_from_request != id) {
       // Make sure the requestor has access to this object, if not, Access Denied
@@ -70,6 +70,51 @@ const UserController = (userModel, authService, googleAPIService) => {
     }
     return res.status(200).json({
       data: user,
+      message: '',
+    });
+  });
+
+  router.post('/hours', async (req, res)=>{
+    if (!req.headers) return res.status(400).json({
+        message: "Malformed Request"
+    });
+
+    if (!req.body) return res.status(400).json({
+      "message": "Malformed Request",
+    });
+    body = req.body;
+
+    const start_hour = body.start;
+    const end_hour = body.end;
+
+    //check if start/end hours are out of range or undefined
+    if(start_hour === undefined || start_hour < 0 || start_hour > 24 || end_hour === undefined || end_hour < 0 || end_hour > 24){
+      return res.status(400).json({
+        data:null,
+        message:"Malformed Request"
+      });
+    }
+
+    const [id, err1] = await authService.getLoggedInUserID(req.headers);
+
+    if(err1){
+      return res.status(400).json({
+        data:null,
+        message:err1.message,
+      });
+    }
+
+    const [hrs_set, err2] = await userModel.setHours(start_hour, end_hour, id);
+
+    if(err2){
+      return res.status(400).json({
+        data:null,
+        message:err2.message,
+      });
+    }
+
+    return res.status(200).json({
+      data: hrs_set,
       message: '',
     });
   });
