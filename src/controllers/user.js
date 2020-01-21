@@ -11,11 +11,13 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     if (err1) {
       return res.status(400).json({
-        message: err1.message,
+        data: null,
+        message: err1.message
       });
     } else if (user_id_from_request != id) {
       // Make sure the requestor has access to this object, if not, Access Denied
       return res.status(403).json({
+        data: null,
         message: "Access Denied"
       });
     }
@@ -23,18 +25,21 @@ const UserController = (userModel, authService, googleAPIService) => {
     const [user, err2] = await userModel.getUser(id);
     if (err2) {
       return res.status(400).json({
-        message: err.message,
+        data: null,
+        message: err.message
       });
     }
     return res.status(200).json({
       data: user,
+      message: ""
     });
   });
 
 
   router.post('/signup', async (req, res) => {
     if (!req.body) return res.status(400).json({
-      "message": "Malformed Request",
+      data: null,
+      message: "Malformed Request"
     });
     body = req.body
 
@@ -44,7 +49,7 @@ const UserController = (userModel, authService, googleAPIService) => {
     if (err1) {
       return res.status(400).json({
         data: null,
-        message: err1.message,
+        message: err1.message
       });
     }
 
