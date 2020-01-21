@@ -57,6 +57,33 @@ returns
 }
 ```
 
+### Modify current user's scheduling hours of availability
+POST /api/users/hours
+```
+{
+  "start": <hour_to_begin_scheduling_tasks>,
+  "end": <hour_to_end_scheduling_tasks>
+}
+```
+returns
+```
+{
+  "data": {
+    "id": <TWAIN_USER_ID>,
+    "first_name": "<user_first_name>",
+    "last_name": "<user_last_name>",
+    "email": "<user_email>",
+    "google_id": "<user_google_id>",
+    "picture_url": "<profile_picture_url_from_google>",
+    "hours_start": <hour_to_begin_scheduling_tasks>,
+    "hours_end": <hour_to_end_scheduling_tasks>,
+    "created_at": "<CREATED_AT_TIMESTAMP>",
+    "updated_at": "<UPDATED_AT_TIMESTAMP>"
+  },
+  "message": "<ERROR_MESSAGE>",
+}
+```
+
 ### Create new task
 POST /api/tasks/
 ```
