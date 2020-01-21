@@ -12,6 +12,8 @@ const UserRepo = (postgres) => {
       email text NOT NULL UNIQUE,
       google_id text,
       picture_url text,
+      hours_start INT,
+      hours_end INT,
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
@@ -86,11 +88,32 @@ const UserRepo = (postgres) => {
     }
   };
 
+  //Set the start-end hours to the hour range passed in and returns the updated values.
+  const setHoursSQL = `
+    UPDATE users
+    SET hours_start=$1, hours_end=$2
+    WHERE id=$3
+    RETURNING *;`;
+
+  const setHours = async (start_hour, end_hour, id) => {
+    const values = [start_hour, end_hour, id];
+    // console.log(values); This line is to test that the user ID being changed is the one logged in, and the only one modified. 
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(setHoursSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch(err) {
+      return [null, err];
+    }
+  };
+
   return {
     setupRepo,
     createUser,
     getUserIDByGoogleID,
     getUser,
+    setHours,
   };
 };
 
