@@ -1,4 +1,4 @@
-# twain-backend
+# Twain Backend
 The backend for the Twain scheduling app
 
 ## Makefile commands
@@ -19,6 +19,22 @@ Use the `access_token` from Chrome to do requests
 
 
 ## API Definitions
+
+### User Model Definition
+```
+{
+  "id": <TWAIN_USER_ID>,
+  "first_name": "<user_first_name>",
+  "last_name": "<user_last_name>",
+  "email": "<user_email>",
+  "google_id": "<user_google_id>",
+  "picture_url": "<profile_picture_url_from_google>",
+  "hours_start": <hour_to_begin_scheduling_tasks (initially null)>,
+  "hours_end": <hour_to_end_scheduling_tasks (initially null)>,
+  "created_at": "<CREATED_AT_TIMESTAMP>",
+  "updated_at": "<UPDATED_AT_TIMESTAMP>"
+}
+```
 ### Create new user
 POST /api/users/signup (*No access token in header needed for this request*)
 ```
@@ -29,18 +45,7 @@ POST /api/users/signup (*No access token in header needed for this request*)
 returns 
 ```	
 {
-  "data": {
-    "id": <TWAIN_USER_ID>,
-    "first_name": "<user_first_name>",
-    "last_name": "<user_last_name>",
-    "email": "<user_email>",
-    "google_id": "<user_google_id>",
-    "picture_url": "<profile_picture_url_from_google>",
-    "hours_start": <hour_to_begin_scheduling_tasks (initially null)>,
-    "hours_end": <hour_to_end_scheduling_tasks (initially null)>,
-    "created_at": "<CREATED_AT_TIMESTAMP>",
-    "updated_at": "<UPDATED_AT_TIMESTAMP>"
-  },
+  "data": <USER_MODEL_ABOVE>,
   "message": "<ERROR_MESSAGE>",
 }
 
@@ -52,18 +57,7 @@ GET /api/users/{user_id}
 returns 
 ``` 
 {
-  "data": {
-    "id": <TWAIN_USER_ID>,
-    "first_name": "<user_first_name>",
-    "last_name": "<user_last_name>",
-    "email": "<user_email>",
-    "google_id": "<user_google_id>",
-    "picture_url": "<profile_picture_url_from_google>",
-    "hours_start": <hour_to_begin_scheduling_tasks>,
-    "hours_end": <hour_to_end_scheduling_tasks>,
-    "created_at": "<CREATED_AT_TIMESTAMP>",
-    "updated_at": "<UPDATED_AT_TIMESTAMP>"
-  },
+  "data": <USER_MODEL_ABOVE>,
   "message": "<ERROR_MESSAGE>",
 }
 
@@ -80,19 +74,30 @@ POST /api/users/hours
 returns
 ```
 {
-  "data": {
-    "id": <TWAIN_USER_ID>,
-    "first_name": "<user_first_name>",
-    "last_name": "<user_last_name>",
-    "email": "<user_email>",
-    "google_id": "<user_google_id>",
-    "picture_url": "<profile_picture_url_from_google>",
-    "hours_start": <hour_to_begin_scheduling_tasks>,
-    "hours_end": <hour_to_end_scheduling_tasks>,
-    "created_at": "<CREATED_AT_TIMESTAMP>",
-    "updated_at": "<UPDATED_AT_TIMESTAMP>"
-  },
+  "data": <USER_MODEL_ABOVE>,
   "message": "<ERROR_MESSAGE>",
+}
+```
+
+### Task Model
+```
+{
+  "id": <task_id>,
+  "user_id": <TWAIN_USER_ID>
+  "name": "<task_name>",
+  "description": "<task_description>",
+  "duration": <task_duration_in_seconds>,
+  "due_date": <timestamp>,
+  "completed": <boolean>,
+  "completed_time": <timestamp>,
+  "scheduled": <boolean>,
+  "scheduled_time": <timestamp>,
+  "calendar_id" <google_calendar_id>,
+  "event_id": <google_event_id>, 
+  "start_time": <timestamp>,
+  "end_time": <timestamp>,
+  "created_time" <timestamp>,
+  "updated_time" <timestamp>
 }
 ```
 
@@ -108,24 +113,7 @@ POST /api/tasks/
 returns
 ```
 {
-  "data": {
-    "id": <task_id>,
-    "user_id": <TWAIN_USER_ID>
-    "name": "<task_name>",
-    "description": "<task_description>",
-    "duration": <task_duration_in_seconds>,
-    "due_date": <timestamp>,
-    "completed": <boolean>,
-    "completed_time": <timestamp>,
-    "scheduled": <boolean>,
-    "scheduled_time": <timestamp>,
-    "calendar_id" <google_calendar_id>,
-    "event_id": <google_event_id>, 
-    "start_time": <timestamp>,
-    "end_time": <timestamp>,
-    "created_time" <timestamp>,
-    "updated_time" <timestamp>
-  },
+  "data": <TASK_MODEL_ABOVE>,
   "error": "<ERROR_MESSAGE>"
 }
 ```
@@ -136,24 +124,7 @@ GET /api/tasks/{id}
 returns
 ```
 {
-  "data": {
-    "id": <task_id>,
-    "user_id": <TWAIN_USER_ID>
-    "name": "<task_name>",
-    "description": "<task_description>",
-    "duration": <task_duration_in_seconds>,
-    "due_date": <timestamp>,
-    "completed": <boolean>,
-    "completed_time": <timestamp>,
-    "scheduled": <boolean>,
-    "scheduled_time": <timestamp>,
-    "calendar_id" <google_calendar_id>,
-    "event_id": <google_event_id>, 
-    "start_time": <timestamp>,
-    "end_time": <timestamp>,
-    "created_time" <timestamp>,
-    "updated_time" <timestamp>
-  },
+  "data": <TASK_MODEL_ABOVE>,
   "error": "<ERROR_MESSAGE>"
 }
 ```
@@ -166,45 +137,13 @@ returns
 {
   "data": {
     "not_scheduled": [
-      {
-	    "id": <task_id>,
-	    "user_id": <TWAIN_USER_ID>
-	    "name": "<task_name>",
-	    "description": "<task_description>",
-	    "duration": <task_duration_in_seconds>,
-	    "due_date": <timestamp>,
-	    "completed": <boolean>,
-	    "completed_time": <timestamp>,
-	    "scheduled": <boolean>,
-	    "scheduled_time": <timestamp>,
-	    "calendar_id" <google_calendar_id>,
-	    "event_id": <google_event_id>, 
-	    "start_time": <timestamp>,
-	    "end_time": <timestamp>,
-	    "created_time" <timestamp>,
-	    "updated_time" <timestamp>
-      },
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
       ...
     ], 
     "scheduled": [
-      {
-	    "id": <task_id>,
-	    "user_id": <TWAIN_USER_ID>
-	    "name": "<task_name>",
-	    "description": "<task_description>",
-	    "duration": <task_duration_in_seconds>,
-	    "due_date": <timestamp>,
-	    "completed": <boolean>,
-	    "completed_time": <timestamp>,
-	    "scheduled": <boolean>,
-	    "scheduled_time": <timestamp>,
-	    "calendar_id" <google_calendar_id>,
-	    "event_id": <google_event_id>, 
-	    "start_time": <timestamp>,
-	    "end_time": <timestamp>,
-	    "created_time" <timestamp>,
-	    "updated_time" <timestamp>
-      },
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
       ...
     ]
   },
@@ -226,41 +165,9 @@ returns
 ```
 {
     "data": [
-        {
-            "id": <event_id>,
-            "name": "<event_name>",
-            "description": "<event_description>",
-            "duration": <task_duration_in_seconds>,
-	    "due_date": <timestamp>,
-	    "completed": <boolean>,
-	    "completed_time": <timestamp>,
-	    "scheduled": <boolean>,
-	    "scheduled_time": <timestamp>,
-	    "calendar_id" <google_calendar_id>,
-	    "event_id": <google_event_id>, 
-	    "start_time": <timestamp>,
-	    "end_time": <timestamp>,
-	    "created_time" <timestamp>,
-	    "updated_time" <timestamp>
-        },
-        {
-            "id": <event_id>,
-            "name": "<event_name>",
-            "description": "<event_description>",
-            "duration": <task_duration_in_seconds>,
-	    "due_date": <timestamp>,
-	    "completed": <boolean>,
-	    "completed_time": <timestamp>,
-	    "scheduled": <boolean>,
-	    "scheduled_time": <timestamp>,
-	    "calendar_id" <google_calendar_id>,
-	    "event_id": <google_event_id>, 
-	    "start_time": <timestamp>,
-	    "end_time": <timestamp>,
-	    "created_time" <timestamp>,
-	    "updated_time" <timestamp>
-        },
-	...
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
+      ...
     ],
     "error": "<ERROR_MESSAGE>"
 }
