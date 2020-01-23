@@ -55,23 +55,21 @@ const GoogleAPIService = () => {
 		const timeMax = body.timeMax;
 		const items = body.freebusy_list;
 
-		axios.post(freeBusyURL,
-			{
-				timeMin: timeMin,
-				timeMax: timeMax,
-				items: items
-			},
-			{
-				headers: {
-					Authorization: auth_header
-				}
-			})
+		var axiosInstance = axios.create({
+			baseURL: freeBusyURL,
+			timeout: 1000,
+			headers: {'Authorization': auth_header}
+		});
+
+		return await axiosInstance.post('/', body)
 			.then((response) => {
-				return [(response.data, null)];
+				return [response.data, null];
 			})
 			.catch((error) => {
 				return [null, error];
 			});
+
+		}
 
 		// var axiosInstance = axios.create({
 		// 	baseURL: freeBusyURL,

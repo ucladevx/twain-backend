@@ -20,7 +20,7 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
                 error: "Malformed Request"
             });
         }
-
+        
         // Get the user_id of the user sending the request
         const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
         if (err1) {
@@ -97,12 +97,17 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
                 items: freebusy_list 
             };
 
+        console.log(freebusy_body)
+
         const [calendars_data, err4] = await googleAPIService.getFreeBusyIntervalsWithToken(req.headers, freebusy_body);
-        
+
         if (err4)
             return [null, err4];
         
         const calendars = calendars_data.calendars;
+        
+        console.log("Printing freebusy info")
+        console.log(calendars)
         let busy_intervals = [];
                         
         for (id in calendars) {
