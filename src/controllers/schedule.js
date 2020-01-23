@@ -1,7 +1,8 @@
 const express = require('express');
 const axios = require('axios');
+const querystring = require('querystring')
 
-const ScheduleController = (taskModel, authService) => {
+const ScheduleController = (taskModel, authService, googleAPIService) => {
     const router = express.Router();
 
     router.post('/', async (req, res) => {
@@ -24,10 +25,10 @@ const ScheduleController = (taskModel, authService) => {
         const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
         if (err1) {
             return res.status(400).json({
+                data: null,
                 error: err1.message,
             });
         }
-        // console.log("User: " + user_id_from_request)
 
         // Get requested tasks
         const promises = ids.map(id => taskModel.getTask(id));
@@ -60,35 +61,20 @@ const ScheduleController = (taskModel, authService) => {
             }
             tasks.push(task);
         });
-        // console.log("Task: " + tasks[0].id)
 
         // Get the user's calendars
-        const auth_header = req.headers['authorization'];
-        if (auth_header == null) {
-            return [null, "No Authorization Received"]
+        const [user_calendars, err3] = await googleAPIService.getUserCalendarsWithToken(req.headers);
+
+        if (err3) {
+            return res.status(400).json({
+                data: null,
+                error: err3.message,
+            })
         }
 
-        const [calendar_ids, err3] = await axios.get('https://www.googleapis.com/calendar/v3/users/me/calendarList', 
-            {
-                headers: {
-                    Authorization: auth_header
-                }
-            }
-        )
-            .then(response => {
-                const items = response.data.items;
-                const calendar_ids = [];
-                for (item of items)
-                    calendar_ids.push(item.id);
-                
-                return [calendar_ids, null];
-            })
-            .catch(error => {
-                return [null, error];
-            });
-
-        if (err3) 
-            return [null, err3];
+        const calendar_ids = [];
+        for (item of user_calendars.items)
+            calendar_ids.push(item.id);
 
         // Get the times the user is busy today
         let today = new Date();
@@ -102,47 +88,32 @@ const ScheduleController = (taskModel, authService) => {
         for (calendar of calendar_ids) {
             freebusy_list.push({id: calendar});
         } 
-        let now_str = new Date().toISOString()
-        let due = tasks[0].due_date
+        let now_str = new Date().toISOString();
+        let due = tasks[0].due_date;
 
-        // console.log(now_str)
-        // console.log(due)
-
-        const [busy_intervals, err4] = await axios.post('https://www.googleapis.com/calendar/v3/freeBusy',
-            { 
+        freebusy_body = { 
                 timeMin: now_str,
                 timeMax: due,
                 items: freebusy_list 
-            },
-            {
-                headers: {
-                    Authorization: auth_header
+            };
+
+        const [calendars_data, err4] = await googleAPIService.getFreeBusyIntervalsWithToken(req.headers, freebusy_body);
+        
+        if (err4)
+            return [null, err4];
+        
+        const calendars = calendars_data.calendars;
+        let busy_intervals = [];
+                        
+        for (id in calendars) {
+            if (calendars[id].busy.length) {
+                for (interval of calendars[id].busy) {
+                    busy_intervals.push([new Date(interval.start), new Date(interval.end)]);
                 }
             }
-        )
-            .then(response => {
-                const calendars = response.data.calendars;
-                let busy_intervals = [];
-                                
-                for (id in calendars) {
-                    if (calendars[id].busy.length) {
-                        for (interval of calendars[id].busy) {
-                            busy_intervals.push([new Date(interval.start), new Date(interval.end)]);
-                        }
-                    }
-                }
+        }
 
-                return [busy_intervals, null];
-            })
-            .catch (error => {
-                return [null, error];
-            });
-
-        if (err4) 
-            return [null, err4];
-        // console.log("Busy times: ")
-        
-
+        console.log("Busy times: ")
         // sorts them by start time, ascending
         busy_intervals.sort((a, b) => {
             return (a[0] - b[0]);
@@ -311,7 +282,7 @@ const ScheduleController = (taskModel, authService) => {
             
                     // console.log("End time")
                     // console.log(end_time_iso_str)
-                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/longerbeamalex@gmail.com/events/',
+                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/jj11d7t@g.ucla.edu/events/',
                         {
                             start: {
                                 dateTime: free_times[i][0]
@@ -356,7 +327,7 @@ const ScheduleController = (taskModel, authService) => {
         // console.log(event_data)
         let t = tasks[0]
         let event_id = event_data.id
-        let calendar_id = "longerbeamalex@gmail.com"
+        let calendar_id = "jj11d7t@g.ucla.edu"
         let event_start_time = new Date(event_data.start.dateTime).toISOString()
         let event_end_time = new Date(event_data.end.dateTime).toISOString()
 

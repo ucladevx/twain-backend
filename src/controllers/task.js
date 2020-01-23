@@ -75,7 +75,7 @@ const TaskController = (taskModel, authService) => {
     router.post('/', async (req, res) => {
         if (!req.body)
             return res.status(400).json({
-                data: {},
+                data: null,
                 error: "Malformed Request"
             });
         const body = req.body;

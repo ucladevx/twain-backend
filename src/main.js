@@ -47,7 +47,7 @@ function start(port) {
   const taskModel = TaskModel(taskRepo);
   const taskController = TaskController(taskModel, authService);
 
-  const scheduleController = ScheduleController(taskModel, authService);
+  const scheduleController = ScheduleController(taskModel, authService, googleAPIService);
 
   const app = express();
   app.disable('x-powered-by');
