@@ -97,7 +97,7 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
                 items: freebusy_list 
             };
 
-        console.log(freebusy_body)
+        // console.log(freebusy_body)
 
         const [calendars_data, err4] = await googleAPIService.getFreeBusyIntervalsWithToken(req.headers, freebusy_body);
 
@@ -106,8 +106,8 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
         
         const calendars = calendars_data.calendars;
         
-        console.log("Printing freebusy info")
-        console.log(calendars)
+        // console.log("Printing freebusy info")
+        // console.log(calendars)
         let busy_intervals = [];
                         
         for (id in calendars) {
@@ -118,7 +118,7 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
             }
         }
 
-        console.log("Busy times: ")
+        // console.log("Busy times: ")
         // sorts them by start time, ascending
         busy_intervals.sort((a, b) => {
             return (a[0] - b[0]);
@@ -273,12 +273,12 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
                 free_times.push(interval)
             }
         }
-        console.log("Free times: ")
-        console.log(free_times)
+        // console.log("Free times: ")
+        // console.log(free_times)
 
         // creates an event
         // TODO: multiple events and updating the free time availability as we schedule
-        let google_event_response = null
+        let calendar_id = "jj11d7t@g.ucla.edu"
         for (task of tasks) {
             for (i = 0; i < free_times.length; i++) {
                 let free_dur = Math.round((new Date(free_times[i][1]) - new Date(free_times[i][0])) / 1000)  
@@ -287,64 +287,38 @@ const ScheduleController = (taskModel, authService, googleAPIService) => {
             
                     // console.log("End time")
                     // console.log(end_time_iso_str)
-                    const [response, err5] = await axios.post('https://www.googleapis.com/calendar/v3/calendars/jj11d7t@g.ucla.edu/events/',
-                        {
-                            start: {
-                                dateTime: free_times[i][0]
-                            },
-                            end: {
-                                // TODO: make it end after the specified duration
-                                dateTime: end_time_iso_str
-                            },
-                            summary: task.name, 
-                            description: task.description
-                        },
-                        {
-                            headers: {
-                                Authorization: auth_header
-                            }
-                        }
-                    )
-                        .then(response => {
-                            return [response, null];
-                        })
-                        .catch(error => {
-                            return [null, error];
-                        });
-                
-                    if (!err5) {
-                        google_event_response = response
-                        break;
-                    } else {
-                        console.log("error: " + err5.message)
-                    }
 
+                    schedule_event_body = {
+                        start: {
+                            dateTime: free_times[i][0]
+                        },
+                        end: {
+                            // TODO: make it end after the specified duration
+                            dateTime: end_time_iso_str
+                        },
+                        summary: task.name,
+                        description: task.description
+                    }
+                    const [response, err5] = await googleAPIService.scheduleEventWithToken(req.headers, calendar_id, schedule_event_body);
+                    
+                    if (err5)
+                        console.log("error: " + err5.message);
+
+                    let t = tasks[0]
+                    let event_id = response.id;
+                    let event_start_time = new Date(response.start.dateTime).toISOString()
+                    let event_end_time = new Date(response.end.dateTime).toISOString()
+
+                    const [final_task, last_err] = await taskModel.scheduleTask(t.id, event_id, calendar_id, event_start_time, event_end_time)
+                    return res.status(200).json({
+                        data: final_task,
+                        error: last_err
+                    });
                 }
             }
         }
-        if (google_event_response === null) {
-            return res.status(400).json({
-            data: null,
-            error: "Not able to schedule"
-        })
-        }
-        let event_data = google_event_response.data
-        // console.log(event_data)
-        let t = tasks[0]
-        let event_id = event_data.id
-        let calendar_id = "jj11d7t@g.ucla.edu"
-        let event_start_time = new Date(event_data.start.dateTime).toISOString()
-        let event_end_time = new Date(event_data.end.dateTime).toISOString()
-
-        const [final_task, last_err] = await taskModel.scheduleTask(t.id, event_id, calendar_id, event_start_time, event_end_time)
-        return res.status(200).json({
-            data: final_task,
-            error: last_err
-        })
-        
     });
-
-    return router;
+    return router;        
 }
 
 module.exports = {

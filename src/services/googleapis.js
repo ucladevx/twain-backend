@@ -6,9 +6,10 @@ const GoogleAPIService = () => {
 	const userInfoURL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 	const userCalendarsURL = 'https://www.googleapis.com/calendar/v3/users/me/calendarList';
 	const freeBusyURL = 'https://www.googleapis.com/calendar/v3/freeBusy';
+	const scheduleEventURL = 'https://www.googleapis.com/calendar/v3/calendars/';
 
 	const getUserInfoWithToken = async (token) => {
-		var axiosInstance = axios.create({
+		let axiosInstance = axios.create({
   			baseURL: userInfoURL,
   			timeout: 1000,
   			headers: {'Authorization': 'Bearer ' + token}
@@ -25,13 +26,12 @@ const GoogleAPIService = () => {
 	};
 
 	const getUserCalendarsWithToken = async (header) => {
-		const auth_header = header['authorization']
+		const auth_header = header['authorization'];
 		if (auth_header == null) {
-			return [null, "No Authorization Received"]
+			return [null, "No Authorization Received"];
 		}
-		const token = auth_header.slice(7)
 
-		var axiosInstance = axios.create({
+		let axiosInstance = axios.create({
 			baseURL: userCalendarsURL,
 			timeout: 1000,
 			headers: {'Authorization': auth_header}
@@ -47,15 +47,12 @@ const GoogleAPIService = () => {
 	}
 
 	const getFreeBusyIntervalsWithToken = async (header, body) => {
-		const auth_header = header['authorization']
+		const auth_header = header['authorization'];
 		if (auth_header == null) {
-			return [null, "No Authorization Received"]
+			return [null, "No Authorization Received"];
 		}
-		const timeMin = body.timeMin;
-		const timeMax = body.timeMax;
-		const items = body.freebusy_list;
 
-		var axiosInstance = axios.create({
+		let axiosInstance = axios.create({
 			baseURL: freeBusyURL,
 			timeout: 1000,
 			headers: {'Authorization': auth_header}
@@ -68,33 +65,35 @@ const GoogleAPIService = () => {
 			.catch((error) => {
 				return [null, error];
 			});
+	}
 
+	const scheduleEventWithToken = async (header, calendar_id, body) => {
+		const auth_header = header['authorization'];
+		if (auth_header == null) {
+			return [null, "No Authorization Received"];
 		}
 
-		// var axiosInstance = axios.create({
-		// 	baseURL: freeBusyURL,
-		// 	timeout: 1000,
-		// 	headers: {'Authorization': auth_header},
-		// 	data: {
-		// 		"timeMin": timeMin,
-		// 		"timeMax": timeMax,
-		// 		"items": items
-		// 	}
-		// });
+		let axiosInstance = axios.create({
+			baseURL: scheduleEventURL + calendar_id + '/events',
+			timeout: 1000,
+			headers: {'Authorization': auth_header}
+		});
 
-		// return await axiosInstance.post('/')
-		// 	.then((response) => {
-		// 		return [(response.data, null)];
-		// 	})
-		// 	.catch((error) => {
-		// 		return [null, error];
-		// 	});
-		// }
+		return await axiosInstance.post('/', body)
+			.then((response) => {
+				return [response.data, null];
+			})
+			.catch((error) => {
+				return [null, error];
+			});
+	}
+	
 
 	return {
 		getUserInfoWithToken,
 		getUserCalendarsWithToken,
-		getFreeBusyIntervalsWithToken
+		getFreeBusyIntervalsWithToken,
+		scheduleEventWithToken
   };
 }
 
