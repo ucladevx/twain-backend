@@ -83,8 +83,7 @@ const TaskRepo = (postgres) => {
             if (res.rows[0] == undefined)
                 return [null, "Invalid ID"];
             return [res.rows[0], ""]; //requires null because no error in this case
-        }
-        catch (err) {
+        } catch (err) {
             return [null, err]; // return null for the actual object, the error should not be null
         } 
     }
@@ -120,13 +119,32 @@ const TaskRepo = (postgres) => {
         }
     }
 
+    const scheduleTaskSQL = `
+        UPDATE tasks SET scheduled=true, event_id=$2, calendar_id=$3, start_time=$4, end_time=$5
+        WHERE id=$1
+        RETURNING *;
+    `
+
+    const scheduleTask = async(task_id, event_id, calendar_id, start_time, end_time) => {
+        const values = [task_id, event_id, calendar_id, start_time, end_time];
+        try {
+            const client = await postgres.connect(); 
+            const res = await client.query(scheduleTaskSQL, values);
+            client.release();
+            return [res.rows[0], ""];
+        } catch (err) {
+            return [null, err];
+        }
+    }
+
     return {
         setupRepo,
         createTask,
         getTaskByID,
         setTaskCompleted,
         getAllNotScheduledTasks,
-        getAllScheduledTasks
+        getAllScheduledTasks,
+        scheduleTask,
     };
 }
 

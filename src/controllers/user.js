@@ -75,7 +75,7 @@ const UserController = (userModel, authService, googleAPIService) => {
     }
     return res.status(200).json({
       data: user,
-      message: '',
+      message: "",
     });
   });
 

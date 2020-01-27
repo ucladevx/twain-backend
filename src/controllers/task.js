@@ -75,7 +75,7 @@ const TaskController = (taskModel, authService) => {
     router.post('/', async (req, res) => {
         if (!req.body)
             return res.status(400).json({
-                data: {},
+                data: null,
                 error: "Malformed Request"
             });
         const body = req.body;
@@ -123,7 +123,7 @@ const TaskController = (taskModel, authService) => {
 
         const promises = ids.map(id => taskModel.setTaskCompleted(id))
         const rows = await Promise.all(promises)
-        console.log(rows)
+        
         let completed_arr = []
         rows.forEach(t => {
             if (t[1]) {
