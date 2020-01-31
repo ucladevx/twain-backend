@@ -34,11 +34,19 @@ const UserModel = (repo) => {
     return await repo.setHours(start_hour, end_hour, id);
   }
 
+  const setPrimaryCalendar = async(primary_calendar, id) => {
+    return await repo.setPrimaryCalendar(primary_calendar, id);
+  }
+  const setRelevantCalendars = async(relevant_calendars, id) => {
+    return await repo.setRelevantCalendars(relevant_calendars, id);
+  }
   return {
     createUser,
     getUserIDByGoogleID,
     getUser,
     setHours,
+    setPrimaryCalendar,
+    setRelevantCalendars,
   };
 };
 

@@ -14,6 +14,8 @@ const UserRepo = (postgres) => {
       picture_url text,
       hours_start INT,
       hours_end INT,
+      primary_calendar text,
+      relevant_calendars text,
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
@@ -97,10 +99,45 @@ const UserRepo = (postgres) => {
 
   const setHours = async (start_hour, end_hour, id) => {
     const values = [start_hour, end_hour, id];
-    // console.log(values); This line is to test that the user ID being changed is the one logged in, and the only one modified. 
     try {
       const client = await postgres.connect();
       const res = await client.query(setHoursSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch(err) {
+      return [null, err];
+    }
+  };
+
+  const setPrimaryCalendarSQL = `
+    UPDATE users
+    SET primary_calendar=$1
+    WHERE id=$2
+    RETURNING *;`;
+
+  const setPrimaryCalendar = async (primary_calendar, id) => {
+    const values = [primary_calendar, id];
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(setPrimaryCalendarSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch(err) {
+      return [null, err];
+    }
+  };
+
+  const setRelevantCalendarsSQL = `
+    UPDATE users
+    SET relevant_calendars=$1
+    WHERE id=$2
+    RETURNING *;`;
+
+  const setRelevantCalendars = async (relevant_calendars, id) => {
+    const values = [relevant_calendars, id];
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(setRelevantCalendarsSQL, values);
       client.release();
       return [res.rows[0], null];
     } catch(err) {
@@ -114,6 +151,8 @@ const UserRepo = (postgres) => {
     getUserIDByGoogleID,
     getUser,
     setHours,
+    setPrimaryCalendar,
+    setRelevantCalendars,
   };
 };
 

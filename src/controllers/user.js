@@ -1,5 +1,9 @@
 const express = require('express');
+const {UserCalendarController} = require('./users/calendar');
+
 const UserController = (userModel, authService, googleAPIService) => {
+
+  const userCalendarController = UserCalendarController(userModel, authService, googleAPIService);
   const router = express.Router();
 
   router.get('/:id', async (req, res) => {
@@ -58,7 +62,7 @@ const UserController = (userModel, authService, googleAPIService) => {
     const email = data['email']
     const google_id = data['id']
     const pic_url = data['picture']
-    
+
     const [user, err2] = await userModel.createUser(
       first_name,
       last_name,
@@ -125,11 +129,11 @@ const UserController = (userModel, authService, googleAPIService) => {
     });
   });
 
-  return router;
+  router.use('/calendars', userCalendarController);
 
+  return router;
 }
-  
+
 module.exports = {
   UserController,
 };
-
