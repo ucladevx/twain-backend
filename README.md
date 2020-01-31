@@ -32,7 +32,7 @@ Use the `access_token` from Chrome to do requests
   "hours_start": <hour_to_begin_scheduling_tasks (initially null)>,
   "hours_end": <hour_to_end_scheduling_tasks (initially null)>,
   "primary_calendar": "<primary_calendar_of_user>",
-  "relevant_calendars": "<relevant_calendars_of_user>",
+  "relevant_calendars": "<comma_separated_relevant_calendars_of_user>",
   "created_at": "<CREATED_AT_TIMESTAMP>",
   "updated_at": "<UPDATED_AT_TIMESTAMP>"
 }
@@ -100,7 +100,7 @@ returns
 POST /api/users/calendars/relevant
 ```
 {
-  "relevant_calendars": "<relevant_calendars_of_user>"
+  "relevant_calendars": "<comma_separated_relevant_calendars_of_user>"
 }
 ```
 returns

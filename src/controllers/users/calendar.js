@@ -16,7 +16,6 @@ const UserCalendarController = (userModel, authService, googleAPIService) => {
     body = req.body;
 
     const primary_calendar = body.primary_calendar;
-    //check if start/end hours are out of range or undefined
 
     const [id, err1] = await authService.getLoggedInUserID(req.headers);
 
@@ -55,7 +54,6 @@ const UserCalendarController = (userModel, authService, googleAPIService) => {
     body = req.body;
 
     const relevant_calendars = body.relevant_calendars;
-    //check if start/end hours are out of range or undefined
 
     const [id, err1] = await authService.getLoggedInUserID(req.headers);
 
