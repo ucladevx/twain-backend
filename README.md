@@ -5,7 +5,7 @@ The backend for the Twain scheduling app
 
 * **make**: Runs **make build** and **make run**
 * **make build**: Builds the docker container
-* **make run**: Runs the server and postgres 
+* **make run**: Runs the server and postgres
 * **make run_background**: Runs the server and postgres in the background (i.e. you will see no output)
 * **make stop**: If you run **make run_background**, use this to stop the server
 * **make p_shell**: Opens an interactive psql shell connected to our postgres instance
@@ -31,6 +31,8 @@ Use the `access_token` from Chrome to do requests
   "picture_url": "<profile_picture_url_from_google>",
   "hours_start": <hour_to_begin_scheduling_tasks (initially null)>,
   "hours_end": <hour_to_end_scheduling_tasks (initially null)>,
+  "primary_calendar": "<primary_calendar_of_user>",
+  "relevant_calendars": "<relevant_calendars_of_user>",
   "created_at": "<CREATED_AT_TIMESTAMP>",
   "updated_at": "<UPDATED_AT_TIMESTAMP>"
 }
@@ -42,8 +44,8 @@ POST /api/users/signup (*No access token in header needed for this request*)
   "token": "<ACCESS_TOKEN_FROM_CHROME>"
 }
 ```
-returns 
-```	
+returns
+```
 {
   "data": <USER_MODEL_ABOVE>,
   "message": "<ERROR_MESSAGE>",
@@ -54,8 +56,8 @@ returns
 ### Get user info by id
 GET /api/users/{user_id}
 
-returns 
-``` 
+returns
+```
 {
   "data": <USER_MODEL_ABOVE>,
   "message": "<ERROR_MESSAGE>",
@@ -69,6 +71,36 @@ POST /api/users/hours
 {
   "start": <hour_to_begin_scheduling_tasks>,
   "end": <hour_to_end_scheduling_tasks>
+}
+```
+returns
+```
+{
+  "data": <USER_MODEL_ABOVE>,
+  "message": "<ERROR_MESSAGE>",
+}
+```
+
+### Modify current user's scheduling hours of availability
+POST /api/users/calendars/primary
+```
+{
+  "primary_calendar": "<primary_calendar_of_user>"
+}
+```
+returns
+```
+{
+  "data": <USER_MODEL_ABOVE>,
+  "message": "<ERROR_MESSAGE>",
+}
+```
+
+### Modify current user's scheduling hours of availability
+POST /api/users/calendars/relevant
+```
+{
+  "relevant_calendars": "<relevant_calendars_of_user>"
 }
 ```
 returns
@@ -93,7 +125,7 @@ returns
   "scheduled": <boolean>,
   "scheduled_time": <timestamp>,
   "calendar_id" <google_calendar_id>,
-  "event_id": <google_event_id>, 
+  "event_id": <google_event_id>,
   "start_time": <timestamp>,
   "end_time": <timestamp>,
   "created_time" <timestamp>,
@@ -140,7 +172,7 @@ returns
       <TASK_MODEL_ABOVE>,
       <TASK_MODEL_ABOVE>,
       ...
-    ], 
+    ],
     "scheduled": [
       <TASK_MODEL_ABOVE>,
       <TASK_MODEL_ABOVE>,
@@ -150,11 +182,11 @@ returns
   "error": "<ERROR_MESSAGE>"
 }
 ```
-**Note:** 
+**Note:**
   *`not_scheduled` is ordered by most recently added at the top
   *`scheduled` is ordered by increasing chronological order
 
-### Set Tasks Complete by ID (Array of IDs) 
+### Set Tasks Complete by ID (Array of IDs)
 POST /api/tasks/complete_task
 ```
 {
@@ -206,5 +238,3 @@ returns
   "error": "<ERROR_MESSAGE>"
 }
 ```
-
-
