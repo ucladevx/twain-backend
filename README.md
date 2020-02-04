@@ -81,7 +81,7 @@ returns
 }
 ```
 
-### Modify current user's scheduling hours of availability
+### Modify current user's primary calendar
 POST /api/users/calendars/primary
 ```
 {
@@ -96,7 +96,7 @@ returns
 }
 ```
 
-### Modify current user's scheduling hours of availability
+### Modify current user's relevant calendars (to avoid conflicts in Twain)
 POST /api/users/calendars/relevant
 ```
 {
