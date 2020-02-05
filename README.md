@@ -53,8 +53,8 @@ returns
 
 ```
 
-### Get user info by id
-GET /api/users/{user_id}
+### Get user info of logged in user
+GET /api/users/me
 
 returns
 ```
