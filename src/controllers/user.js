@@ -6,10 +6,8 @@ const UserController = (userModel, authService, googleAPIService) => {
   const userCalendarController = UserCalendarController(userModel, authService, googleAPIService);
   const router = express.Router();
 
-  router.get('/:id', async (req, res) => {
-    const params = req.params;
-    const id = parseInt(params.id, 10);
-
+  router.get('/me', async (req, res) => {
+  
     // Get the user_id of the user sending the request
     const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
 
@@ -18,15 +16,9 @@ const UserController = (userModel, authService, googleAPIService) => {
         data: null,
         message: err1.message
       });
-    } else if (user_id_from_request != id) {
-      // Make sure the requestor has access to this object, if not, Access Denied
-      return res.status(403).json({
-        data: null,
-        message: "Access Denied"
-      });
     }
 
-    const [user, err2] = await userModel.getUser(id);
+    const [user, err2] = await userModel.getUser(user_id_from_request);
     if (err2) {
       return res.status(400).json({
         data: null,
