@@ -8,10 +8,10 @@ const TaskController = (taskModel, authService) => {
                 message: "Malformed Request"
             });
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        if (user_id == undefined){
+        if (user_id == null) {
             return res.status(400).json({
                 data: null,
-                error: "Malformed Request. " + user_err
+                error: "Malformed Request " + user_err
             });
         }
         let arr = [] //create array

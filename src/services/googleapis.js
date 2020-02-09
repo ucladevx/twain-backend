@@ -60,7 +60,20 @@ const GoogleAPIService = () => {
 
 		return await axiosInstance.post('/', body)
 			.then((response) => {
-				return [response.data, null];
+				const calendars = response.data.calendars;
+				const busyIntervals = [];
+
+				for (id of Object.keys(calendars)) {
+					arr = calendars[id].busy;
+					if (arr.length > 0)
+					{
+						arr.forEach((elem) => {
+							busyIntervals.push([elem.start, elem.end]);
+						});
+					}
+				}
+
+				return [busyIntervals, null];
 			})
 			.catch((error) => {
 				return [null, error];
