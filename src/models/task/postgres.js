@@ -119,6 +119,23 @@ const TaskRepo = (postgres) => {
         }
     }
 
+    const getTasksForSchedulingSQL = `
+        SELECT * FROM tasks WHERE user_id=$1 AND id = ANY($2) AND scheduled = FALSE ORDER BY due_date ASC;
+    `;
+    const getTasksForScheduling = async (userID, task_ids) => {
+        const values = [userID, task_ids];
+        console.log(values);
+        try {
+            const client = await postgres.connect();
+            const res = await client.query(getTasksForSchedulingSQL, values);
+            client.release();
+            return [res.rows, null] // error message is empty string 
+        }
+        catch (err) {
+            return [null, "Error retrieving tasks for scheduling"]; // return null  for the data if user's tasks DNE
+        }
+    }
+
     const scheduleTaskSQL = `
         UPDATE tasks SET scheduled=true, event_id=$2, calendar_id=$3, start_time=$4, end_time=$5
         WHERE id=$1
@@ -143,6 +160,7 @@ const TaskRepo = (postgres) => {
         getTaskByID,
         setTaskCompleted,
         getAllNotScheduledTasks,
+        getTasksForScheduling,
         getAllScheduledTasks,
         scheduleTask,
     };

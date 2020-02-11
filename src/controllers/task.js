@@ -100,7 +100,7 @@ const TaskController = (taskModel, authService) => {
         const [task, err2] = await taskModel.createTask(name, description, duration, due_date, user_id_from_request);
         return res.status(200).json({
             data: task,
-            error: err2 ? err.message : ""
+            error: err2 ? err2.message : ""
         })
     })
 
