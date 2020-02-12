@@ -84,7 +84,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
 
         // Expects a moment object
         function validTime(momentObj) {
-            if (momentObj.hour() >= startHr && momentObj.hour() <= endHr) {
+            if (momentObj.hour() >= startHr && momentObj.hour() < endHr) {
                 console.log('within hours of operation');
                 return 0;
             }
@@ -92,7 +92,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
                 console.log('before hours of operation');
                 return -1;
             }
-            else if (momentObj.hour() > endHr) {
+            else if (momentObj.hour() >= endHr) {
                 console.log('after hours of operation');
                 return 1;   
             }
@@ -136,8 +136,8 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
                 }
                 // At this point in the code, we don't need to worry if the interval is in reverse
                 // since we already checked if lastEndTime comes before busyInt[0], so this is just
-                // a check if the interval ends on a day in the future.
-                else {
+                // a check if the interval ends one day in the future.
+                else if (busyInt[0].date() - lastEndTime.date() == 1) {
                     console.log("different day")
                     // Check if the start is within hours of operation
                     if (validTime(lastEndTime) == 0) {
@@ -154,10 +154,26 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
                         freeInts.push([intStart.format(), busyInt[0].format()]);
                     }
                     // If neither are within hours of operation, do nothing!
-                    console.log([lastEndTime.format(), busyInt[0].format()]);
+                }
+                // If the interval ends greater than a day in the future...
+                else if (busyInt[0].date() - lastEndTime.date() > 1) {
+                    // Then we can add the whole day
+                    let intStart = lastEndTime.clone()
+                    intStart.hour(startHr).minute(0).second(0).millisecond(0);
+                    let intEnd = intStart.clone();
+                    intEnd.hour(endHr).minute(0).second(0).millisecond(0);
+
+                    freeInts.push([intStart.format(), intEnd.format()]);
                 }
             }
-            lastEndTime = busyInt[1];
+            // We can't skip any days!
+            if (busyInt[0].date() > lastEndTime.date() + 1) {
+                lastEndTime.add(1, "days");
+                lastEndTime.hour(startHr).minute(0).second(0).millisecond(0);
+                console.log('rewind a day!');
+            }
+            else
+                lastEndTime = busyInt[1];
         });
         // TODO: I don't think this function gets the very last free interval (up to the last due date)
 
