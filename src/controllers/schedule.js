@@ -205,17 +205,17 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         //      freeTime - An array of two-element arrays, each representing an interval of free time.
         //          The times should be in seconds since epoch.
         function solve(tasks, freeTime) {
-            if (tasks.length == 0) 
-                return [];
+            if (tasks.length == 0)
+                return tasks;
 
             let currTask = tasks[0]; // assume ordered by due date (earliest to latest)
-            const tDuration = currTask.duration;
-            let newFreeTime = 0;
+            let tDuration = currTask.duration;
 
-            freeTime.forEach((freeInt) => {
-                iDuration = freeInt[1] - freeInt[0];
+            for (let i = 0; i < freeTime.length; i++) {
+                let freeInt = freeTime[i];
+                let iDuration = freeInt[1] - freeInt[0];
                 if (tDuration <= iDuration) {
-                    // Set task start time to beginning of interval
+                    // Set task start time to beginning of interval)
                     currTask.scheduled_time = freeInt[0];
 
                     // Check that start_time + duration <= due_date
@@ -225,11 +225,12 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                         return [currTask].concat(solve(tasks.slice(1), freeTime));
                     }
 
+                    let newFreeTime;
                     if (tDuration < iDuration) {
                         let newInt = [freeInt[0] + tDuration, freeInt[1]];
                         newFreeTime = [newInt].concat(freeTime.slice(1));
                     }
-                    else if (tDuration == iDuration) 
+                    else if (tDuration == iDuration)
                         newFreeTime = freeTime.slice(1);
 
                     let result = solve(tasks.slice(1), newFreeTime);
@@ -237,9 +238,9 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                     if (result.length > 0)
                         return [currTask].concat(result);
                     else 
-                        return [];
+                        continue;
                 }
-            });
+            };
 
             // Not solvable with any placement of the first event, solve the rest
             return [currTask].concat(solve(tasks.slice(1), freeTime));
@@ -248,8 +249,8 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         // Convert to local datetimes
         scheduledTaskList = solve(tasks, freeInts);
         for (let i = 0; i < scheduledTaskList.length; i++) {
-            let dt = scheduledTaskList[i].scheduled_time;
-            scheduledTaskList[i].scheduled_time = moment.unix(dt).tz(req.body.timeZone);
+            let dt = moment.unix(scheduledTaskList[i].scheduled_time);
+            scheduledTaskList[i].scheduled_time = dt.tz(req.body.timeZone).format();
         }
 
         return res.status(200).json({
