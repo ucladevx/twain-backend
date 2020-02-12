@@ -1,7 +1,7 @@
 const express = require('express');
 const moment = require('moment-timezone');
 
-const ScheduleController = (userModel, taskModel, authService, googleAPIService) => {
+const ScheduleController = (userModel, taskModel, authService, googleAPIService, solve) => {
     const router = express.Router();
 
     router.post('/', async(req, res) => {
@@ -175,7 +175,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
             else
                 lastEndTime = busyInt[1];
         });
-        // TODO: I don't think this function gets the very last free interval (up to the last due date)
+        // TODO: I don't know if this function gets the very last free interval (up to the last due date)
 
         // Print for debugging purposes
         console.log("FREE INTERVALS");
@@ -184,8 +184,76 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService)
         });
         console.log();
 
+        // TODO: Make it so that freeInts is already in seconds since epoch so we don't have to convert
+        freeInts = freeInts.map((interval) => {
+            return [
+                moment(interval[0]).unix(), 
+                moment(interval[1]).unix()
+            ];
+        });
+
+        function isValidTask(task) {
+            const due = task.due_date;
+            const duration = task.duration;
+            const start = task.scheduled_time;
+            return start + duration <= due;
+        }
+
+        //  Arguments:
+        //      tasks - An array of task objects, as defined by the task model. Sorted from earliest
+        //          to latest due date.
+        //      freeTime - An array of two-element arrays, each representing an interval of free time.
+        //          The times should be in seconds since epoch.
+        function solve(tasks, freeTime) {
+            if (tasks.length == 0) 
+                return [];
+
+            let currTask = tasks[0]; // assume ordered by due date (earliest to latest)
+            const tDuration = currTask.duration;
+            let newFreeTime = 0;
+
+            freeTime.forEach((freeInt) => {
+                iDuration = freeInt[1] - freeInt[0];
+                if (tDuration <= iDuration) {
+                    // Set task start time to beginning of interval
+                    currTask.scheduled_time = freeInt[0];
+
+                    // Check that start_time + duration <= due_date
+                    if (!isValidTask(currTask)) {
+                        // We can't schedule the event
+                        currTask.scheduled_time = null;
+                        return [currTask].concat(solve(tasks.slice(1), freeTime));
+                    }
+
+                    if (tDuration < iDuration) {
+                        let newInt = [freeInt[0] + tDuration, freeInt[1]];
+                        newFreeTime = [newInt].concat(freeTime.slice(1));
+                    }
+                    else if (tDuration == iDuration) 
+                        newFreeTime = freeTime.slice(1);
+
+                    let result = solve(tasks.slice(1), newFreeTime);
+
+                    if (result.length > 0)
+                        return [currTask].concat(result);
+                    else 
+                        return [];
+                }
+            });
+
+            // Not solvable with any placement of the first event, solve the rest
+            return [currTask].concat(solve(tasks.slice(1), freeTime));
+        }
+
+        // Convert to local datetimes
+        scheduledTaskList = solve(tasks, freeInts);
+        for (let i = 0; i < scheduledTaskList.length; i++) {
+            let dt = scheduledTaskList[i].scheduled_time;
+            scheduledTaskList[i].scheduled_time = moment.unix(dt).tz(req.body.timeZone);
+        }
+
         return res.status(200).json({
-            data: freeInts,
+            data: scheduledTaskList,
             error: null
         });
     });
