@@ -1,8 +1,25 @@
 const express = require('express');
+//const googleAPI = require('../../services/googleapis');
+
 
 const UserCalendarController = (userModel, authService, googleAPIService) => {
   const router = express.Router();
 
+  router.get('/', async(req,res)=>{
+    const response = googleAPIService.getUserCalendarsWithToken(req.header);
+    if(response[0] == null){
+      return res.status(400).json({
+        data: null,
+        message: response[1]
+      });
+    }
+    return res.status(200).json({
+      data: [response[0]["id"],response[0]["summary"]],
+      message: null
+    });
+
+
+  })
   router.post('/primary', async (req, res)=>{
     if (!req.headers) return res.status(400).json({
         data: null,
