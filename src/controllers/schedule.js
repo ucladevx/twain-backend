@@ -193,7 +193,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         });
 
         function isValidTask(task) {
-            const due = task.due_date;
+            const due = moment(task.due_date).unix();
             const duration = task.duration;
             const start = task.scheduled_time;
             return start + duration <= due;
@@ -214,8 +214,9 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             for (let i = 0; i < freeTime.length; i++) {
                 let freeInt = freeTime[i];
                 let iDuration = freeInt[1] - freeInt[0];
+
                 if (tDuration <= iDuration) {
-                    // Set task start time to beginning of interval)
+                    // Set task start time to beginning of interval
                     currTask.scheduled_time = freeInt[0];
 
                     // Check that start_time + duration <= due_date
@@ -233,24 +234,37 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                     else if (tDuration == iDuration)
                         newFreeTime = freeTime.slice(1);
 
-                    let result = solve(tasks.slice(1), newFreeTime);
+                    // Sort newFreeTime
+                    newFreeTime.sort((intA, intB) => {
+                        if (intA[0] < intB[0])
+                            return -1;
+                        else if (intA[0] == intB[0])
+                            return 0;
+                        else
+                            return 1;
+                    });
 
-                    if (result.length > 0)
-                        return [currTask].concat(result);
-                    else 
-                        continue;
+                    if (newFreeTime[0][0] == currTask.scheduled_time)
+                        newFreeTime = newFreeTime.slice(1);
+
+                    let result = solve(tasks.slice(1), newFreeTime);
+                    return [currTask].concat(result);
                 }
             };
 
             // Not solvable with any placement of the first event, solve the rest
             return [currTask].concat(solve(tasks.slice(1), freeTime));
         }
+        // TODO: Verify that this algorithm can backfill
 
-        // Convert to local datetimes
         scheduledTaskList = solve(tasks, freeInts);
+        // Convert to local datetimes
         for (let i = 0; i < scheduledTaskList.length; i++) {
-            let dt = moment.unix(scheduledTaskList[i].scheduled_time);
-            scheduledTaskList[i].scheduled_time = dt.tz(req.body.timeZone).format();
+            let dt = scheduledTaskList[i].scheduled_time;
+            if (dt != null) {
+                dt = moment.unix(dt);
+                scheduledTaskList[i].scheduled_time = dt.tz(req.body.timeZone).format();
+            }
         }
 
         return res.status(200).json({
