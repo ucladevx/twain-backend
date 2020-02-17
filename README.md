@@ -111,6 +111,28 @@ returns
 }
 ```
 
+### Get all calendars for a user
+GET /api/users/calendars/
+
+returns
+```
+{
+  "data": 
+    [
+      {
+          "id": "<calendar_1_id>",
+          "summary": "<calendar_1_summary>"
+      },
+      {
+          "id": "<calendar_2_id>",
+          "summary": "<calendar_2_summary>"
+      },
+      ...
+    ],
+  "message": "<ERROR_MESSAGE>",
+}
+```
+
 ### Task Model
 ```
 {
