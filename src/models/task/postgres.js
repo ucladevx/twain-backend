@@ -8,15 +8,15 @@ const TaskRepo = (postgres) => {
             duration int NOT NULL,
             due_date timestamptz NOT NULL,
             completed boolean,
-            completed_time timestamptz, 
+            completed_time timestamp, 
             scheduled boolean,
-            scheduled_time timestamptz,
+            scheduled_time timestamp,
             calendar_id text,
             event_id text,
-            start_time timestamptz,
-            end_time timestamptz,
-            created_time timestamptz DEFAULT NOW(),
-            updated_time timestamptz DEFAULT NOW()
+            start_time timestamp,
+            end_time timestamp,
+            created_time timestamp DEFAULT NOW(),
+            updated_time timestamp DEFAULT NOW()
         );
     `;
 

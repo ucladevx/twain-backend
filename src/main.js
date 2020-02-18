@@ -23,56 +23,61 @@ const {TaskController} = require('./controllers/task');
 
 const {ScheduleController} = require('./controllers/schedule');
 
-const {AuthService} = require('./services/auth')
-const {GoogleAPIService} = require('./services/googleapis')
+const {AuthService} = require('./services/auth');
+const {GoogleAPIService} = require('./services/googleapis');
+const {ScheduleService} = require('./services/schedule');
 
 function start(port) {
-  const postgres = PostgresDB(config.database);
+	const postgres = PostgresDB(config.database);
 
-  const userRepo = UserRepo(postgres);
-  userRepo.setupRepo();
-  const userModel = UserModel(userRepo);
+	// Set up models
+	const userRepo = UserRepo(postgres);
+	userRepo.setupRepo();
+	const userModel = UserModel(userRepo);
 
-  const authService = AuthService(userModel);
-  const googleAPIService = GoogleAPIService()
-  const userController = UserController(userModel, authService, googleAPIService);
+	const eventRepo = EventRepo(postgres);
+	eventRepo.setupRepo();
+	const eventModel = EventModel(eventRepo);
 
-  const eventRepo = EventRepo(postgres);
-  eventRepo.setupRepo();
-  const eventModel = EventModel(eventRepo);
-  const eventController = EventController(eventModel);
+	const taskRepo = TaskRepo(postgres);
+	taskRepo.setupRepo();
+	const taskModel = TaskModel(taskRepo);
 
-  const taskRepo = TaskRepo(postgres);
-  taskRepo.setupRepo();
-  const taskModel = TaskModel(taskRepo);
-  const taskController = TaskController(taskModel, authService);
+	// Set up services
+	const authService = AuthService(userModel);
+	const googleAPIService = GoogleAPIService();
+	const scheduleService = ScheduleService();
+	
+	// Set up controllers
+	const userController = UserController(userModel, authService, googleAPIService);
+	const eventController = EventController(eventModel);
+	const taskController = TaskController(taskModel, authService);
+	const scheduleController = ScheduleController(userModel, taskModel, authService, googleAPIService, scheduleService);
 
-  const scheduleController = ScheduleController(userModel, taskModel, authService, googleAPIService);
+	const app = express();
+	app.disable('x-powered-by');
+	app.use(compression());
+	app.use(morgan('dev'));
+	app.use(
+	cors({
+		origin: ['http://localhost:3000'],
+		credentials: true,
+	}),
+	);
+	app.use(cookieParser());
+	app.use(bodyParser.json());
 
-  const app = express();
-  app.disable('x-powered-by');
-  app.use(compression());
-  app.use(morgan('dev'));
-  app.use(
-    cors({
-      origin: ['http://localhost:3000'],
-      credentials: true,
-    }),
-  );
-  app.use(cookieParser());
-  app.use(bodyParser.json());
+	const router = express.Router();
+	router.use('/users', userController);
+	router.use('/events', eventController);
+	router.use('/tasks', taskController);
+	router.use('/schedule', scheduleController);
 
-  const router = express.Router();
-  router.use('/users', userController);
-  router.use('/events', eventController);
-  router.use('/tasks', taskController);
-  router.use('/schedule', scheduleController);
+	app.use('/api', router);
 
-  app.use('/api', router);
-
-  app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-  });
+	app.listen(port, () => {
+		console.log(`Listening on port ${port}`);
+	});
 }
 
 start(config.port);

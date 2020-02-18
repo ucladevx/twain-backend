@@ -205,6 +205,27 @@ returns
 }
 ```
 
+### Schedule Tasks (Array of Task objects)
+POST /api/schedule
+```
+{
+	"ids": [<array_of_task_ids>],
+  "timeMin": <Date>,
+  "timeZone": "<user_timezone>"
+}
+```
+returns
+```
+{
+    "data": [
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
+      ...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
 ### Create Event
 POST /api/events/
 ```
