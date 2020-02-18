@@ -197,7 +197,7 @@ returns
 ```
 {
     "data": [
-      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>
       <TASK_MODEL_ABOVE>,
       ...
     ],
@@ -209,7 +209,7 @@ returns
 POST /api/schedule
 ```
 {
-	"ids": [<array_of_task_ids>],
+  "ids": [<array_of_task_ids>],
   "timeMin": <Date>,
   "timeZone": "<user_timezone>"
 }
