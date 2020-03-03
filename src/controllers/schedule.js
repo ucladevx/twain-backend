@@ -155,11 +155,13 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                     "timeZone": req.body.timeZone
                 }
             }
-            let response = await googleAPIService.scheduleEventWithToken(req.headers, targetCalendar, reqBody);
-            console.log(response);
-            let [confirmed_task, err] = await taskModel.confirmSchedule(id, response.id, targetCalendar, taskStart, taskEnd);
-            if (err)
-                console.log('Error confirming task!', err);
+            let [response, calendarErr] = await googleAPIService.scheduleEventWithToken(req.headers, targetCalendar, reqBody);
+            if (calendarErr)
+                console.log('Error creating Google Calendar event!', calendarErr)
+
+            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, taskStart, taskEnd);
+            if (confirmErr)
+                console.log('Error confirming task!', confirmErr);
             else
                 confirmedTaskList.push(confirmed_task);
         }
