@@ -210,8 +210,34 @@ POST /api/schedule
 ```
 {
   "ids": [<array_of_task_ids>],
-  "timeMin": <Date>,
-  "timeZone": "<user_timezone>"
+  "timeMin": <ISO String (UTC)>,
+  "timeZone": <timezone string>
+}
+```
+returns
+```
+{
+    "data": [
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
+      ...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
+POST /api/schedule/confirm
+```
+{
+  "good_ids": [<array_of_task_ids>],
+  "force": [
+        {
+	 "id": <task_id>,
+         "start_time": <ISO String (UTC)>
+	},
+	...
+   ],
+  "timeZone": <timezone string>
 }
 ```
 returns

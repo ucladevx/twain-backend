@@ -12,16 +12,12 @@ const ScheduleService = () => {
     //      -1, if before
     //      1, if after
     function validTime(momentObj, startHr, endHr) {
-        if (momentObj.hour() >= startHr && momentObj.hour() < endHr) {
-            console.log('within hours of operation');
+        if (momentObj.hour() >= startHr && momentObj.hour() < endHr)
             return 0;
-        } else if (momentObj.hour() < startHr) {
-            console.log('before hours of operation');
+        else if (momentObj.hour() < startHr)
             return -1;
-        } else if (momentObj.hour() >= endHr) {
-            console.log('after hours of operation');
+        else if (momentObj.hour() >= endHr)
             return 1;
-        }
     }
 
     // Checks if the given task will end before its due date.
@@ -46,8 +42,6 @@ const ScheduleService = () => {
     //      endHr (integer) -> The user's end to hours of operation.
     // Returns:
     //      An array of free intervals in formatted date strings (local time).
-    // TODO: I don't know if this function gets the very last free interval 
-    //      (up to the last due date)
     const createFreeIntervals = async(timeMin, timeZone, busyMomInts, startHr, endHr) => {
         let freeInts = [];
         let lastEndTime = moment(timeMin).tz(timeZone);
@@ -56,48 +50,37 @@ const ScheduleService = () => {
             if (lastEndTime.isBefore(busyInt[0])) {
                 // Check if the interval happens on the same day
                 if (lastEndTime.isSame(busyInt[0], "day")) {
-                    console.log("same day");
                     // Check if the interval is within hours of operation
-                    if (validTime(lastEndTime, startHr, endHr) == 0 && validTime(busyInt[0], startHr, endHr) == 0) {
-                        console.log("\tin hours of operation")
+                    if (validTime(lastEndTime, startHr, endHr) == 0 && validTime(busyInt[0], startHr, endHr) == 0)
                         freeInts.push([lastEndTime.format(), busyInt[0].format()]);
-                    }
                     // Check if the interval starts before hours of operation... 
                     else if (validTime(lastEndTime, startHr, endHr) == -1) {
-                        console.log("\tstarts before hours of operation");
                         let intStart = lastEndTime.clone();
                         intStart.hour(startHr).minute(0).second(0).millisecond(0);
                         // ... and ends within
-                        if (validTime(busyInt[0], startHr, endHr) == 0) {
-                            console.log("\t\tends within hours of operation");
+                        if (validTime(busyInt[0], startHr, endHr) == 0)
                             freeInts.push([intStart.format(), busyInt[0].format()])
-                        }
                         // ... and ends after
                         else if (validTime(busyInt[0], startHr, endHr) == 1) {
-                            console.log("\t\tends after hours of operation");
                             let intEnd = busyInt[0].clone();
                             intEnd.hour(endHr).minute(0).second(0).millisecond(0);
                             freeInts.push([intStart.format(), intEnd.format()]);
                         }
                         // If the interval ends before hours of operation, do nothing!
-                        console.log([lastEndTime.format(), busyInt[0].format()]);
                     }
                 }
                 // At this point in the code, we don't need to worry if the interval is in reverse
                 // since we already checked if lastEndTime comes before busyInt[0], so this is just
                 // a check if the interval ends one day in the future.
                 else if (busyInt[0].date() - lastEndTime.date() == 1) {
-                    console.log("different day")
                     // Check if the start is within hours of operation
                     if (validTime(lastEndTime, startHr, endHr) == 0) {
-                        console.log("\tstarts within hours of operation");
                         let intEnd = lastEndTime.clone();
                         intEnd.hour(endHr).minute(0).second(0).millisecond(0);
                         freeInts.push([lastEndTime.format(), intEnd.format()]);
                     }
                     // Check if the end is within hours of operation
                     if (validTime(busyInt[0], startHr, endHr) == 0) {
-                        console.log("\tends within hours of operation")
                         let intStart = busyInt[0].clone();
                         intStart.hour(startHr).minute(0).second(0).millisecond(0);
                         freeInts.push([intStart.format(), busyInt[0].format()]);
@@ -119,7 +102,6 @@ const ScheduleService = () => {
             if (busyInt[0].date() > lastEndTime.date() + 1) {
                 lastEndTime.add(1, "days");
                 lastEndTime.hour(startHr).minute(0).second(0).millisecond(0);
-                console.log('rewind a day!');
             } else
                 lastEndTime = busyInt[1];
         });

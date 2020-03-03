@@ -30,8 +30,6 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             });
         }
 
-        console.log(tasks);
-
         // Create the freeBusy request
         const [user, _] = await userModel.getUser(user_id);     
         const relevantCalendars = user.relevant_calendars.split(',');
@@ -47,8 +45,6 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             "timeZone": req.body.timeZone, // user's local timezone
             "items": freeBusyItems
         };
-
-        console.log(freeBusyBody);
 
         // Get the list of busy intervals in user's local time
         const [googleBusyInts, int_err] = await googleAPIService.getFreeBusyIntervalsWithToken(req.headers, freeBusyBody);
@@ -77,28 +73,14 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             ];
         });
 
-        // Print for debugging purposes
-        console.log("BUSY INTERVALS");
-        busyMomInts.forEach((busyInt) => {
-            console.log([busyInt[0].format(), busyInt[1].format()]);
-        });
-        console.log();
-
         // Get user's hours of operation (should be in 24hr format)
         const startHr = user.hours_start;
         const endHr = user.hours_end;
 
         // Get the user's free intervals
         let freeInts = await scheduleService.createFreeIntervals(req.body.timeMin, req.body.timeZone, busyMomInts, startHr, endHr);
-        // Print for debugging purposes
-        console.log("FREE INTERVALS");
-        freeInts.forEach((freeInt) => {
-            console.log(freeInt);
-        });
-        console.log();
 
         // Schedule tasks
-        // TODO: Make it so that freeInts is already in seconds since epoch so we don't have to convert
         freeInts = freeInts.map((interval) => {
             return [
                 moment(interval[0]).unix(), 
@@ -107,20 +89,83 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         });
         scheduledTaskList = scheduleService.scheduleTasks(tasks, freeInts);
 
-        // Convert to local datetimes
+        // Convert to ISO Strings
         for (let i = 0; i < scheduledTaskList.length; i++) {
             let dt = scheduledTaskList[i].scheduled_time;
             if (dt != null) {
-                dt = moment.unix(dt);
-                scheduledTaskList[i].scheduled_time = dt.tz(req.body.timeZone).format();
+                let scheduledISOString = moment.unix(dt).toISOString();
+                scheduledTaskList[i].scheduled_time = scheduledISOString;
+                await taskModel.scheduleTask(scheduledTaskList[i].id, scheduledISOString);
             }
         }
 
-        // TODO: Actually save changes to our tasks in the database
-        // (Right now, we just return a copy.)
-
         return res.status(200).json({
             data: scheduledTaskList,
+            error: null
+        });
+    });
+
+    router.post('/confirm', async (req, res) => {
+        // Check for headers
+        if (!req.headers)
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request"
+            });
+
+        // Authenticate the user
+        const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
+        if (user_id == null) {
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request " + user_err
+            });
+        }
+
+        // Create the create event request
+        const [user, _] = await userModel.getUser(user_id);
+        const targetCalendar = user.primary_calendar;
+        // TODO: Allow user to select calendar for scheduling
+
+        // Create Google Calendar events and confirm the tasks
+        const goodIDs = req.body.good_ids;
+        let confirmedTaskList = [];
+
+        for (let i = 0; i < goodIDs.length; i++) {
+            let id = goodIDs[i];
+            let [task, _] = await taskModel.getTask(id, user_id);
+
+            if (task.scheduled_time == null)
+                continue;
+
+            let taskStart = task.scheduled_time
+            let formattedTaskStart = moment(taskStart).tz(req.body.timeZone);
+            let formattedTaskEnd = formattedTaskStart.clone().add(task.duration, "minutes");
+            let taskEnd = moment(formattedTaskEnd).toISOString();
+
+            let reqBody = {
+                "summary": task.name,
+                "description": task.description,
+                "start": {
+                    "dateTime": formattedTaskStart,
+                    "timeZone": req.body.timeZone
+                },
+                "end": {
+                    "dateTime": formattedTaskEnd,
+                    "timeZone": req.body.timeZone
+                }
+            }
+            let response = await googleAPIService.scheduleEventWithToken(req.headers, targetCalendar, reqBody);
+            console.log(response);
+            let [confirmed_task, err] = await taskModel.confirmSchedule(id, response.id, targetCalendar, taskStart, taskEnd);
+            if (err)
+                console.log('Error confirming task!', err);
+            else
+                confirmedTaskList.push(confirmed_task);
+        }
+
+        return res.status(200).json({
+            data: confirmedTaskList,
             error: null
         });
     });

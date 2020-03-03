@@ -14,7 +14,6 @@ const TaskController = (taskModel, authService) => {
                 error: "Malformed Request " + user_err
             });
         }
-        let arr = [] //create array
         const [task1, err1] = await taskModel.getAllScheduledTasks(user_id);
         const [task2, err2] = await taskModel.getAllNotScheduledTasks(user_id);
         if(err1 != null){

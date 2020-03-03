@@ -26,11 +26,19 @@ const TaskModel = (repo) => {
     const getTasksForScheduling = async (userID, taskIDs) => {
         const [tasks, err] = await repo.getTasksForScheduling(userID, taskIDs);
         return [tasks, err];
-    }
-    const scheduleTask = async (task_id, event_id, calendar_id, start_time, end_time) => {
-        const [task, err] = await repo.scheduleTask(task_id, event_id, calendar_id, start_time, end_time);
+    };
+    const scheduleTask = async(task_id, scheduled_time) => {
+        const [task, err] = await repo.scheduleTask(task_id, scheduled_time);
         return [task, err];
-    }
+    };   
+    const confirmSchedule = async (task_id, event_id, calendar_id, start_time, end_time) => {
+        const [task, err] = await repo.confirmSchedule(task_id, event_id, calendar_id, start_time, end_time);
+        return [task, err];
+    };
+    const cancelSchedule = async (task_id) => {
+        const [task, err] = await repo.cancelSchedule(task_id);
+        return [task, err];
+    };
 
     return {
         createTask,
@@ -40,6 +48,8 @@ const TaskModel = (repo) => {
         getAllNotScheduledTasks,
         getTasksForScheduling,
         scheduleTask,
+        confirmSchedule,
+        cancelSchedule
     };
 }
 
