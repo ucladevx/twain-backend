@@ -5,8 +5,8 @@ const TaskModel = (repo) => {
     };
 
     // Gets a task object by ID
-    const getTask = async (id, user_id) => {
-        const [task, err] = await repo.getTaskByID(id, user_id);
+    const getTask = async (id, userID) => {
+        const [task, err] = await repo.getTaskByID(id, userID);
         return [task, err];
     };
 
@@ -27,16 +27,16 @@ const TaskModel = (repo) => {
         const [tasks, err] = await repo.getTasksForScheduling(userID, taskIDs);
         return [tasks, err];
     };
-    const scheduleTask = async(task_id, scheduled_time) => {
-        const [task, err] = await repo.scheduleTask(task_id, scheduled_time);
+    const scheduleTask = async(taskID, scheduledTime) => {
+        const [task, err] = await repo.scheduleTask(taskID, scheduledTime);
         return [task, err];
     };   
-    const confirmSchedule = async (task_id, event_id, calendar_id, start_time, end_time) => {
-        const [task, err] = await repo.confirmSchedule(task_id, event_id, calendar_id, start_time, end_time);
+    const confirmSchedule = async (taskID, eventID, calendarID, eventURL, startTime, endTime) => {
+        const [task, err] = await repo.confirmSchedule(taskID, eventID, calendarID, eventURL, startTime, endTime);
         return [task, err];
     };
-    const cancelSchedule = async (task_id) => {
-        const [task, err] = await repo.cancelSchedule(task_id);
+    const deleteTask = async (taskID) => {
+        const [task, err] = await repo.deleteTask(taskID);
         return [task, err];
     };
 
@@ -49,7 +49,7 @@ const TaskModel = (repo) => {
         getTasksForScheduling,
         scheduleTask,
         confirmSchedule,
-        cancelSchedule
+        deleteTask
     };
 }
 
