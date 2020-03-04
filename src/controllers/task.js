@@ -8,13 +8,12 @@ const TaskController = (taskModel, authService) => {
                 message: "Malformed Request"
             });
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        if (user_id == undefined){
+        if (user_id == null) {
             return res.status(400).json({
                 data: null,
-                error: "Malformed Request. " + user_err
+                error: "Malformed Request " + user_err
             });
         }
-        let arr = [] //create array
         const [task1, err1] = await taskModel.getAllScheduledTasks(user_id);
         const [task2, err2] = await taskModel.getAllNotScheduledTasks(user_id);
         if(err1 != null){
@@ -100,7 +99,7 @@ const TaskController = (taskModel, authService) => {
         const [task, err2] = await taskModel.createTask(name, description, duration, due_date, user_id_from_request);
         return res.status(200).json({
             data: task,
-            error: err2 ? err.message : ""
+            error: err2 ? err2.message : ""
         })
     })
 

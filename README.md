@@ -219,6 +219,53 @@ returns
 ```
 {
     "data": [
+      <TASK_MODEL_ABOVE>
+      <TASK_MODEL_ABOVE>,
+      ...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
+### Schedule Tasks (Array of Task objects)
+POST /api/schedule
+```
+{
+  "ids": [<array_of_task_ids>],
+  "timeMin": <ISO String (UTC)>,
+  "timeZone": <timezone string>
+}
+```
+returns
+```
+{
+    "data": [
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
+      ...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
+POST /api/schedule/confirm
+```
+{
+  "good_ids": [<array_of_task_ids>],
+  "force": [
+        {
+	 "id": <task_id>,
+         "start_time": <ISO String (UTC)>
+	},
+	...
+   ],
+  "timeZone": <timezone string>
+}
+```
+returns
+```
+{
+    "data": [
       <TASK_MODEL_ABOVE>,
       <TASK_MODEL_ABOVE>,
       ...

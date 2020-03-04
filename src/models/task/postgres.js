@@ -119,17 +119,67 @@ const TaskRepo = (postgres) => {
         }
     }
 
+    const getTasksForSchedulingSQL = `
+        SELECT * FROM tasks WHERE user_id=$1 AND id = ANY($2) AND scheduled = FALSE ORDER BY due_date ASC;
+    `;
+    const getTasksForScheduling = async (userID, task_ids) => {
+        const values = [userID, task_ids];
+        console.log(values);
+        try {
+            const client = await postgres.connect();
+            const res = await client.query(getTasksForSchedulingSQL, values);
+            client.release();
+            return [res.rows, null] // error message is empty string 
+        }
+        catch (err) {
+            return [null, "Error retrieving tasks for scheduling"]; // return null  for the data if user's tasks DNE
+        }
+    }
+
     const scheduleTaskSQL = `
+        UPDATE tasks SET scheduled_time=$2 WHERE id=$1
+        RETURNING *;
+    `
+    const scheduleTask = async(task_id, scheduled_time) => {
+        const values = [task_id, scheduled_time];
+        try {
+            const client = await postgres.connect();
+            const res = await client.query(scheduleTaskSQL, values);
+            client.release();
+            return [res.rows[0], ""];
+        } catch (err) {
+            return [null, err];
+        }
+    }
+
+    const confirmScheduleSQL = `
         UPDATE tasks SET scheduled=true, event_id=$2, calendar_id=$3, start_time=$4, end_time=$5
         WHERE id=$1
         RETURNING *;
     `
 
-    const scheduleTask = async(task_id, event_id, calendar_id, start_time, end_time) => {
+    const confirmSchedule = async(task_id, event_id, calendar_id, start_time, end_time) => {
         const values = [task_id, event_id, calendar_id, start_time, end_time];
         try {
             const client = await postgres.connect(); 
-            const res = await client.query(scheduleTaskSQL, values);
+            const res = await client.query(confirmScheduleSQL, values);
+            client.release();
+            return [res.rows[0], ""];
+        } catch (err) {
+            return [null, err];
+        }
+    }
+
+    const cancelScheduleSQL = `
+        UPDATE tasks SET scheduled_time=null WHERE id=$1
+        RETURNING *;
+    `
+
+    const cancelSchedule = async(task_id) => {
+        const values = [task_id];
+        try {
+            const client = await postgress.connect();
+            const res = await client.query(cancelScheduleSQL, values);
             client.release();
             return [res.rows[0], ""];
         } catch (err) {
@@ -143,8 +193,11 @@ const TaskRepo = (postgres) => {
         getTaskByID,
         setTaskCompleted,
         getAllNotScheduledTasks,
+        getTasksForScheduling,
         getAllScheduledTasks,
         scheduleTask,
+        confirmSchedule,
+        cancelSchedule
     };
 }
 
