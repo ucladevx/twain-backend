@@ -227,6 +227,24 @@ returns
 }
 ```
 
+### Delete Tasks by ID (Array of IDs)
+DELETE /api/tasks
+```
+{
+	"ids": [<array_of_task_ids>]
+}
+```
+returns
+```
+{
+	"data": "Success" (if successful, otherwise null),
+	"error": "<ERROR_MESSAGE(S)>"
+}
+```
+**Note:**
+This will also remove scheduled events from the user's Google Calendar.
+
+
 ### Schedule Tasks (Array of Task objects)
 POST /api/schedule
 ```
@@ -255,7 +273,7 @@ POST /api/schedule/confirm
   "force": [
         {
 	 "id": <task_id>,
-         "start_time": <ISO String (UTC)>
+         "time": <ISO String (UTC)>
 	},
 	...
    ],

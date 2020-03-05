@@ -138,20 +138,20 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             if (task.scheduled_time == null)
                 continue;
 
-            let taskStart = task.scheduled_time
-            let formattedTaskStart = moment(taskStart).tz(req.body.timeZone);
-            let formattedTaskEnd = formattedTaskStart.clone().add(task.duration, "minutes");
-            let taskEnd = moment(formattedTaskEnd).toISOString();
+            let taskStartString = task.scheduled_time
+            let taskStartMoment = moment(taskStartString).tz(req.body.timeZone);
+            let taskEndMoment = taskStartMoment.clone().add(task.duration, "minutes");
+            let taskEndString = taskEndMoment.toISOString();
 
             let reqBody = {
                 "summary": task.name,
                 "description": task.description,
                 "start": {
-                    "dateTime": formattedTaskStart,
+                    "dateTime": taskStartString,
                     "timeZone": req.body.timeZone
                 },
                 "end": {
-                    "dateTime": formattedTaskEnd,
+                    "dateTime": taskEndString,
                     "timeZone": req.body.timeZone
                 }
             }
@@ -159,7 +159,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             if (calendarErr)
                 console.log('Error creating Google Calendar event!', calendarErr)
 
-            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, response.htmlLink, taskStart, taskEnd);
+            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, response.htmlLink, taskStartString, taskEndString);
             if (confirmErr)
                 console.log('Error confirming task!', confirmErr);
             else
@@ -173,20 +173,20 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             let forceTask = forceScheduled[i];
             let [task, _] = await taskModel.getTask(forceTask.id, user_id);
 
-            let taskStart = forceTask.startTime;
-            let formattedTaskStart = moment(taskStart).tz(req.body.timeZone);
-            let formattedTaskEnd = formattedTaskStart.clone().add(task.duration, "minutes");
-            let taskEnd = moment(formattedTaskEnd).toISOString();
+            let taskStartString = forceTask.time;
+            let taskStartMoment = moment(taskStartString).tz(req.body.timeZone);
+            let taskEndMoment = taskStartMoment.clone().add(task.duration, "minutes");
+            let taskEndString = moment(taskEndMoment).toISOString();
 
             let reqBody = {
                 "summary": task.name,
                 "description": task.description,
                 "start": {
-                    "dateTime": formattedTaskStart,
+                    "dateTime": taskStartString,
                     "timeZone": req.body.timeZone
                 },
                 "end": {
-                    "dateTime": formattedTaskEnd,
+                    "dateTime": taskEndString,
                     "timeZone": req.body.timeZone
                 }
             }
@@ -195,7 +195,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             if (calendarErr)
                 console.log('Error creating Google Calendar event!', calendarErr)
 
-            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, response.htmlLink, taskStart, taskEnd);
+            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(forceTask.id, response.id, targetCalendar, response.htmlLink, taskStartString, taskEndString);
             if (confirmErr)
                 console.log('Error confirming task!', confirmErr);
             else
