@@ -51,7 +51,7 @@ function start(port) {
 	// Set up controllers
 	const userController = UserController(userModel, authService, googleAPIService);
 	const eventController = EventController(eventModel);
-	const taskController = TaskController(taskModel, authService);
+	const taskController = TaskController(taskModel, userModel, authService, googleAPIService);
 	const scheduleController = ScheduleController(userModel, taskModel, authService, googleAPIService, scheduleService);
 
 	const app = express();

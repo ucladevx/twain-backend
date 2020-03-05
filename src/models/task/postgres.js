@@ -92,6 +92,7 @@ const TaskRepo = (postgres) => {
     const getAllScheduledTasksSQL = `
         SELECT * FROM tasks WHERE user_id=$1 AND scheduled=TRUE ORDER BY start_time;
     `;
+
     const getAllScheduledTasks = async (userID) => {
         const values = [userID];
         try{
@@ -104,9 +105,11 @@ const TaskRepo = (postgres) => {
             return [null, "Error at Scheduled"]; // return null  for the data if user's tasks DNE
         }
     }
+
     const getAllNotScheduledTasksSQL = `
         SELECT * FROM tasks WHERE user_id=$1 AND scheduled = FALSE ORDER BY updated_time DESC;
     `;
+
     const getAllNotScheduledTasks = async (userID) => {
         const values = [userID];
         try{
@@ -123,6 +126,7 @@ const TaskRepo = (postgres) => {
     const getTasksForSchedulingSQL = `
         SELECT * FROM tasks WHERE user_id=$1 AND id = ANY($2) AND scheduled = FALSE ORDER BY due_date ASC;
     `;
+
     const getTasksForScheduling = async (userID, task_ids) => {
         const values = [userID, task_ids];
         console.log(values);
@@ -141,6 +145,7 @@ const TaskRepo = (postgres) => {
         UPDATE tasks SET scheduled_time=$2 WHERE id=$1
         RETURNING *;
     `
+
     const scheduleTask = async(taskID, scheduledTime) => {
         const values = [taskID, scheduledTime];
         try {
@@ -172,15 +177,21 @@ const TaskRepo = (postgres) => {
     }
 
     const deleteTaskSQL = `
-        DELETE FROM tasks WHERE id=$1
+        DELETE FROM tasks 
+        WHERE id=$1
+        RETURNING scheduled, event_id;
     `
 
     const deleteTask = async(taskID) => {
         const values = [taskID];
-        const client = await postgress.connect();
-        const res = await client.query(deleteTaskSQL, values);
-        client.release();
-        return ["Success!", null];
+        try {
+            const client = await postgres.connect();
+            const res = await client.query(deleteTaskSQL, values);
+            client.release();
+            return [res.rows[0], null];
+        } catch (err) {
+            return [null, err];
+        }
     }
 
     return {
