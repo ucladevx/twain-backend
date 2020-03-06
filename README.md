@@ -209,7 +209,7 @@ returns
   *`scheduled` is ordered by increasing chronological order
 
 ### Set Tasks Complete by ID (Array of IDs)
-POST /api/tasks/complete_task
+POST /api/tasks/complete
 ```
 {
 	"ids": [<array_of_task_ids>]
