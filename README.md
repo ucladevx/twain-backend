@@ -209,7 +209,7 @@ returns
   *`scheduled` is ordered by increasing chronological order
 
 ### Set Tasks Complete by ID (Array of IDs)
-POST /api/tasks/complete_task
+POST /api/tasks/complete
 ```
 {
 	"ids": [<array_of_task_ids>]
@@ -226,6 +226,24 @@ returns
     "error": "<ERROR_MESSAGE>"
 }
 ```
+
+### Delete Tasks by ID (Array of IDs)
+DELETE /api/tasks
+```
+{
+	"ids": [<array_of_task_ids>]
+}
+```
+returns
+```
+{
+	"data": "Success" (if successful, otherwise null),
+	"error": "<ERROR_MESSAGE(S)>"
+}
+```
+**Note:**
+This will also remove scheduled events from the user's Google Calendar.
+
 
 ### Schedule Tasks (Array of Task objects)
 POST /api/schedule
@@ -255,7 +273,7 @@ POST /api/schedule/confirm
   "force": [
         {
 	 "id": <task_id>,
-         "start_time": <ISO String (UTC)>
+         "time": <ISO String (UTC)>
 	},
 	...
    ],

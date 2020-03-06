@@ -1,5 +1,5 @@
 const express = require('express');
-const TaskController = (taskModel, authService) => {
+const TaskController = (taskModel, userModel, authService, googleAPIService) => {
     const router = express.Router();
 
     router.get('/me', async (req, res)=> {
@@ -104,7 +104,7 @@ const TaskController = (taskModel, authService) => {
     })
 
     //my attempt to make a POST request for task-complete:
-    router.post('/complete_task', async (req, res) =>{
+    router.post('/complete', async (req, res) =>{
         if (!req.body)
         return res.status(400).json({
             message: "Malformed Request"
@@ -137,11 +137,70 @@ const TaskController = (taskModel, authService) => {
         
         return res.status(200).json({
             "data": completed_arr,
-            "error": '',
+            "error": null,
         })
+    })
 
+    router.delete('/', async (req, res) => {
+        const [userID, userErr] = await authService.getLoggedInUserID(req.headers);
+        if (userID == null) {
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request " + userErr
+            });
+        }
 
+        if (!req.body)
+            return res.status(400).json({
+                message: "Malformed Request"
+            });
+        const body = req.body;
+        const ids = body.ids;
+
+        // check if the id object is empty
+        if (ids == undefined || ids.length == 0) {
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request"
+            });
+        }
+
+        // TODO: Check with user which calendar to use (assumes primary right now)
+        let [user, retrieveUserError] = await userModel.getUser(userID);
+        if (retrieveUserError)
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request " + retrieveUserError
+            });
+        const calendarID = user.primary_calendar;
+        
+        const promises = ids.map(id => taskModel.deleteTask(id))
+        const rows = await Promise.all(promises)
+        let deleteErrors = [];
+
+        for (let i = 0; i < rows.length; i++)
+        {
+            let queryRes = rows[i];
+            if (queryRes[1])
+                deleteErrors.push(queryRes[1]);
+            else if (queryRes[0].scheduled) {                
+                let [_, calendarErr] = await googleAPIService.deleteEventWithToken(req.headers, calendarID, queryRes[0].event_id);
+                if (calendarErr)
+                    deleteErrors.push(calendarErr);
+            }            
+        }
+
+        if (deleteErrors.length > 0)
+            return res.status(400).json({
+                "data": null,
+                "error": deleteErrors
+            })
+
+        return res.status(200).json({
+            "data": "Success", 
+            "error": null,
         })
+    });
 
     return router;
 }
