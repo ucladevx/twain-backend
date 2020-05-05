@@ -16,11 +16,11 @@ const UserRepo = (postgres) => {
       hours_end INT,
       primary_calendar text,
       relevant_calendars text,
+      weekend_setting BOOLEAN, 
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
 
-  // Uses createUserTableSQL to create the table, and logs the error.
   const setupRepo = async () => {
     try {
       const client = await postgres.connect();
@@ -145,6 +145,24 @@ const UserRepo = (postgres) => {
     }
   };
 
+  const setWeekendSQL = `
+    UPDATE users
+    SET weekend_setting = $1
+    WHERE id=$2
+    RETURNING *;`;
+
+  const setWeekend = async (weekend_setting, id) => {
+    const values = [weekend_setting, id];
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(setWeekendSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch(err) {
+      return [null, err];
+    }
+  };
+
   return {
     setupRepo,
     createUser,
@@ -153,6 +171,7 @@ const UserRepo = (postgres) => {
     setHours,
     setPrimaryCalendar,
     setRelevantCalendars,
+    setWeekend,
   };
 };
 
