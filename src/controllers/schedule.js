@@ -6,11 +6,12 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
 
     router.post('/', async(req, res) => {
         // Check for headers
-        if (!req.headers)
+        if (!req.headers) {
             return res.status(400).json({
                 data: null,
                 error: "Malformed Request"
             });
+        }
         
         // Authenticate the user
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
@@ -42,11 +43,10 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         const freeBusyBody = {
             "timeMin": req.body.timeMin, // in UTC
             "timeMax": tasks[tasks.length - 1].due_date, // in UTC
-            "timeZone": req.body.timeZone, // user's local timezone
             "items": freeBusyItems
         };
 
-        // Get the list of busy intervals in user's local time
+        // Get the list of busy intervals in UTC
         const [googleBusyInts, int_err] = await googleAPIService.getFreeBusyIntervalsWithToken(req.headers, freeBusyBody);
         if (int_err != null) {
             return res.status(400).json({
@@ -65,42 +65,18 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                 return 0;
         });
 
-        // Convert the busy intervals to Moments
-        const busyMomInts = googleBusyInts.map((interval) => {
-            return [
-                moment(interval[0]).tz(req.body.timeZone), 
-                moment(interval[1]).tz(req.body.timeZone)
-            ];
-        });
-
         // Get user's hours of operation (should be in 24hr format)
         const startHr = user.hours_start;
         const endHr = user.hours_end;
 
         // Get the user's free intervals
-        let freeInts = await scheduleService.createFreeIntervals(req.body.timeMin, req.body.timeZone, busyMomInts, startHr, endHr);
+        let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);
 
-        // Schedule tasks
-        freeInts = freeInts.map((interval) => {
-            return [
-                moment(interval[0]).unix(), 
-                moment(interval[1]).unix()
-            ];
-        });
-        scheduledTaskList = scheduleService.scheduleTasks(tasks, freeInts);
-
-        // Convert to ISO Strings
-        for (let i = 0; i < scheduledTaskList.length; i++) {
-            let dt = scheduledTaskList[i].scheduled_time;
-            if (dt != null) {
-                let scheduledISOString = moment.unix(dt).toISOString();
-                scheduledTaskList[i].scheduled_time = scheduledISOString;
-                await taskModel.scheduleTask(scheduledTaskList[i].id, scheduledISOString);
-            }
-        }
+        // TEST CODE
+        freeInts = freeInts.map(x => x.map(y => moment.unix(y).tz(req.body.timeZone).toISOString(true)));
 
         return res.status(200).json({
-            data: scheduledTaskList,
+            data: freeInts,
             error: null
         });
     });
