@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 const ScheduleController = (userModel, taskModel, authService, googleAPIService, scheduleService) => {
     const router = express.Router();
 
-    router.post('/', async(req, res) => {
+    router.post('/', async (req, res) => {
         // Check for headers
         if (!req.headers) {
             return res.status(400).json({
@@ -12,7 +12,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                 error: "Malformed Request"
             });
         }
-        
+
         // Authenticate the user
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
         if (user_id == null) {
@@ -32,12 +32,14 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         }
 
         // Create the freeBusy request
-        const [user, _] = await userModel.getUser(user_id);     
+        const [user, _] = await userModel.getUser(user_id);
         const relevantCalendars = user.relevant_calendars.split(',');
         const freeBusyItems = [];
 
         relevantCalendars.forEach((calendarID) => {
-            freeBusyItems.push({"id": calendarID});
+            freeBusyItems.push({
+                "id": calendarID
+            });
         });
 
         const freeBusyBody = {
@@ -54,7 +56,7 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                 error: "Error retrieving busy intervals"
             });
         }
-    
+
         // Sort the busy intervals in ascending order of start datetime
         googleBusyInts.sort((a, b) => {
             if (moment(a[0]).isBefore(moment(b[0])))
@@ -65,18 +67,15 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
                 return 0;
         });
 
-        // Get user's hours of operation (should be in 24hr format)
-        const startHr = user.hours_start;
-        const endHr = user.hours_end;
+        // TEST CODE - Get the user's free intervals
+        // let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);        
+        // freeInts = freeInts.map(x => x.map(y => moment.unix(y).tz(req.body.timeZone).toISOString(true)));
 
-        // Get the user's free intervals
-        let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);
-
-        // TEST CODE
-        freeInts = freeInts.map(x => x.map(y => moment.unix(y).tz(req.body.timeZone).toISOString(true)));
+        const scheduledTasks = await scheduleService.scheduleTasks(tasks, req.body.timeMin, req.body.timeZone,
+            user.hours_start, user.hours_end, googleBusyInts);
 
         return res.status(200).json({
-            data: freeInts,
+            data: scheduledTasks,
             error: null
         });
     });
