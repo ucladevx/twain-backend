@@ -74,6 +74,12 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
         const scheduledTasks = await scheduleService.scheduleTasks(tasks, req.body.timeMin, req.body.timeZone,
             user.hours_start, user.hours_end, googleBusyInts);
 
+        for (task of scheduledTasks) {
+            if (task.scheduled_time != null) {
+                taskModel.scheduleTask(task.id, task.scheduled_time);
+            }
+        }
+
         return res.status(200).json({
             data: scheduledTasks,
             error: null

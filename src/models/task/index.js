@@ -1,7 +1,11 @@
 const TaskModel = (repo) => {
     // Creates a task object with the specified fields
     const createTask = async (name, description, duration, due_date, user_id) => {
-        return repo.createTask(name, description, duration, due_date, user_id);
+        /*
+         * Multiply duration by 60 because front-end is sending in minutes whereas
+         * backend stores everything in seconds.
+         */
+        return repo.createTask(name, description, duration * 60, due_date, user_id);
     };
 
     // Gets a task object by ID
@@ -27,10 +31,10 @@ const TaskModel = (repo) => {
         const [tasks, err] = await repo.getTasksForScheduling(userID, taskIDs);
         return [tasks, err];
     };
-    const scheduleTask = async(taskID, scheduledTime) => {
+    const scheduleTask = async (taskID, scheduledTime) => {
         const [task, err] = await repo.scheduleTask(taskID, scheduledTime);
         return [task, err];
-    };   
+    };
     const confirmSchedule = async (taskID, eventID, calendarID, eventURL, startTime, endTime) => {
         const [task, err] = await repo.confirmSchedule(taskID, eventID, calendarID, eventURL, startTime, endTime);
         return [task, err];
@@ -42,7 +46,7 @@ const TaskModel = (repo) => {
 
     return {
         createTask,
-        getTask, 
+        getTask,
         setTaskCompleted,
         getAllScheduledTasks,
         getAllNotScheduledTasks,
