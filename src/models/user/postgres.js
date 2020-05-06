@@ -21,6 +21,7 @@ const UserRepo = (postgres) => {
       updated_at timestamptz DEFAULT NOW()
     );`;
 
+  // Uses createUserTableSQL to create the table, and logs the error.
   const setupRepo = async () => {
     try {
       const client = await postgres.connect();
