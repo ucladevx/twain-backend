@@ -119,10 +119,13 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             if (task.scheduled_time == null)
                 continue;
 
-            let taskStartString = task.scheduled_time
-            let taskStartMoment = moment(taskStartString).tz(req.body.timeZone);
-            let taskEndMoment = taskStartMoment.clone().add(task.duration, "minutes");
-            let taskEndString = taskEndMoment.toISOString();
+            let taskStartString = task.scheduled_time;
+            let taskStartMoment = moment(taskStartString);
+            let taskEndMoment = taskStartMoment.clone();
+            taskEndMoment.add(task.duration, "minutes");
+
+            taskStartString = taskStartMoment.tz(req.body.timeZone).toISOString(true);
+            let taskEndString = taskEndMoment.tz(req.body.timeZone).toISOString(true);
 
             let reqBody = {
                 "summary": task.name,

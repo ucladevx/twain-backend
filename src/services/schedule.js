@@ -1,5 +1,6 @@
 const moment = require('moment-timezone');
 const _ = require('lodash');
+const SECONDS_PER_MINUTE = 60;
 
 const ScheduleService = () => {
     // Helper function to convert a time into its seconds since epoch equivalent
@@ -29,8 +30,16 @@ const ScheduleService = () => {
          * the end of hours of operation.
          */
 
+        // Constants
         const START = 0;
         const END = 1;
+
+        // For when we allow the user more flexibility with start time:
+        // const hoursOfOpStartArr = hoursOfOpStart.split(':').map(x => parseInt(x));
+        // const hoursOfOpEndArr = hoursOfOpEnd.split(':').map(x => parseInt(x));
+
+        const hoursOfOpStartArr = [hoursOfOpStart, 0];
+        const hoursOfOpEndArr = [hoursOfOpEnd, 0];
 
         // Helper function to check if a time is within a given interval
         function inInterval(unixTime, interval) {
@@ -40,23 +49,42 @@ const ScheduleService = () => {
             )
         }
 
+        // Helper function for converting to moment object in local time
+        function local(unixTime) {
+            return moment.unix(unixTime).tz(localTZ);
+        }
+
         // Helper function to check if a time is within hours of operation
         function inHoursOfOp(unixTime) {
-            return (
-                moment.unix(unixTime).tz(localTZ).hour() >= hoursOfOpStart &&
-                moment.unix(unixTime).tz(localTZ).hour() < hoursOfOpEnd
-            )
+            const localTime = local(unixTime);
+
+            const afterHoursStart = (
+                localTime.hour() >= hoursOfOpStartArr[0] &&
+                localTime.minute() >= hoursOfOpStartArr[1]
+            );
+
+            const beforeHoursEnd = (
+                localTime.hour() < hoursOfOpEndArr[0] ||
+                (localTime.hour() == hoursOfOpEndArr[0] &&
+                    localTime.minute() < hoursOfOpEndArr[1])
+            );
+
+            return afterHoursStart && beforeHoursEnd;
         }
 
         // Helper function to get beginning of next day
         function getStartTime(unixTime) {
             let currentDay = moment.unix(unixTime).tz(localTZ);
-            currentDay.hour(hoursOfOpStart).minute(0).second(0).millisecond(0);
+            currentDay.hour(hoursOfOpStartArr[0]);
+            currentDay.minute(hoursOfOpStartArr[1]);
+            currentDay.second(0).millisecond(0);
             unixCurrent = currentDay.unix();
 
             let nextDay = currentDay.clone();
             nextDay.add(1, 'days');
-            nextDay.hour(hoursOfOpStart).minute(0).second(0).millisecond(0);
+            nextDay.hour(hoursOfOpStartArr[0]);
+            nextDay.minute(hoursOfOpStartArr[1]);
+            nextDay.second(0).millisecond(0);
             unixNext = nextDay.unix();
 
             return (unixCurrent < unixTime) ? unixNext : unixCurrent;
@@ -65,13 +93,10 @@ const ScheduleService = () => {
         // Helper function to get end of current day
         function getEndTime(unixTime) {
             let currentDay = moment.unix(unixTime).tz(localTZ);
-            currentDay.hour(hoursOfOpEnd).minute(0).second(0).millisecond(0);
+            currentDay.hour(hoursOfOpEndArr[0]);
+            currentDay.minute(hoursOfOpEndArr[1]);
+            currentDay.second(0).millisecond(0);
             return currentDay.unix();
-        }
-
-        // Helper function for debugging by converting to local time
-        function local(unixTime) {
-            return moment.unix(unixTime).tz(localTZ).toISOString(true);
         }
 
         // Create free intervals
@@ -81,8 +106,8 @@ const ScheduleService = () => {
 
         while (i < busyIntervals.length - 1) {
             // TEST CODE
-            // console.log(local(currentTime));
-            // console.log(busyIntervals[i].map(x => local(getUnix(x))));
+            // console.log(local(currentTime).toISOString(true));
+            // console.log(busyIntervals[i].map(x => local(getUnix(x)).toISOString(true)));
             // console.log();
 
             // If current time is outside hours of operation, fast-forward
@@ -154,7 +179,7 @@ const ScheduleService = () => {
         // Helper function to check that a task ends before the end of current interval
         function isValid(task) {
             const due = getUnix(task.due_date);
-            const duration = task.duration;
+            const duration = task.duration * SECONDS_PER_MINUTE;
             const scheduledTime = task.scheduled_time;
 
             return (scheduledTime + duration <= due);
@@ -171,7 +196,7 @@ const ScheduleService = () => {
             const END = 1;
 
             let currentTask = tasks[0];
-            const taskDuration = currentTask.duration;
+            const taskDuration = currentTask.duration * SECONDS_PER_MINUTE;
 
             for (let i = 0; i < freeIntervals.length; i++) {
                 let interval = freeIntervals[i];
@@ -219,7 +244,7 @@ const ScheduleService = () => {
 
             // Go through all branches and find max number of tasks scheduled
             let maxCount = 0;
-            // console.log('\nTask: ' + currentTask.id);
+            console.log('\nTask: ' + currentTask.id);
             // console.log('Branches: ');
             for (branch of allBranches) {
                 let count = 0;

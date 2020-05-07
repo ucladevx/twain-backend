@@ -1,11 +1,7 @@
 const TaskModel = (repo) => {
     // Creates a task object with the specified fields
     const createTask = async (name, description, duration, due_date, user_id) => {
-        /*
-         * Multiply duration by 60 because front-end is sending in minutes whereas
-         * backend stores everything in seconds.
-         */
-        return repo.createTask(name, description, duration * 60, due_date, user_id);
+        return repo.createTask(name, description, duration, due_date, user_id);
     };
 
     // Gets a task object by ID
