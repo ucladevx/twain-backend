@@ -95,6 +95,21 @@ returns
 }
 ```
 
+### Modify current user's preference for scheduling on weekends
+POST /api/users/weekend
+```
+{
+  "weekend_setting": <true_or_false>
+}
+```
+returns
+```
+{
+  "data": <USER_MODEL_ABOVE>,
+  "message": "<ERROR_MESSAGE>",
+}
+```
+
 ### Modify current user's primary calendar
 
 POST /api/users/calendars/primary

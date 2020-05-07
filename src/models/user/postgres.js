@@ -16,6 +16,7 @@ const UserRepo = (postgres) => {
       hours_end text,
       primary_calendar text,
       relevant_calendars text,
+      weekend_setting BOOLEAN, 
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
@@ -145,6 +146,24 @@ const UserRepo = (postgres) => {
     }
   };
 
+  const setWeekendSQL = `
+    UPDATE users
+    SET weekend_setting = $1
+    WHERE id=$2
+    RETURNING *;`;
+
+  const setWeekend = async (weekend_setting, id) => {
+    const values = [weekend_setting, id];
+    try {
+      const client = await postgres.connect();
+      const res = await client.query(setWeekendSQL, values);
+      client.release();
+      return [res.rows[0], null];
+    } catch(err) {
+      return [null, err];
+    }
+  };
+
   return {
     setupRepo,
     createUser,
@@ -153,6 +172,7 @@ const UserRepo = (postgres) => {
     setHours,
     setPrimaryCalendar,
     setRelevantCalendars,
+    setWeekend,
   };
 };
 

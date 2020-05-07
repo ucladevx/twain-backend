@@ -92,7 +92,7 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     const [id, err1] = await authService.getLoggedInUserID(req.headers);
 
-    if(id === undefined){
+    if (id === undefined){
       return res.status(400).json({
         data:null,
         message:"Malformed Request: "+err1,
@@ -101,7 +101,7 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     const [hrs_set, err2] = await userModel.setHours(start_hour, end_hour, id);
 
-    if(err2){
+    if (err2){
       return res.status(400).json({
         data:null,
         message:err2.message,
@@ -110,6 +110,50 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     return res.status(200).json({
       data: hrs_set,
+      message: '',
+    });
+  });
+
+  router.post('/weekend', async (req, res)=>{
+    if (!req.headers) return res.status(400).json({
+        data: null,
+        message: "Malformed Request"
+    });
+
+    if (!req.body) return res.status(400).json({
+      data: null,
+      message: "Malformed Request",
+    });
+    body = req.body;
+
+    const weekend_setting = body.weekend_setting
+    if (weekend_setting === undefined){
+      return res.status(400).json({
+        data:null,
+        message:"Malformed Request"
+      });
+    }
+
+    const [id, err1] = await authService.getLoggedInUserID(req.headers);
+
+    if (id === undefined){
+      return res.status(400).json({
+        data:null,
+        message:"Malformed Request: "+err1,
+      });
+    }
+
+    const [user, err2] = await userModel.setWeekend(weekend_setting, id);
+
+    if (err2){
+      return res.status(400).json({
+        data:null,
+        message:err2.message,
+      });
+    }
+
+    return res.status(200).json({
+      data: user,
       message: '',
     });
   });
