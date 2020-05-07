@@ -7,7 +7,7 @@ const UserController = (userModel, authService, googleAPIService) => {
   const router = express.Router();
 
   router.get('/me', async (req, res) => {
-  
+
     // Get the user_id of the user sending the request
     const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
 
@@ -89,13 +89,6 @@ const UserController = (userModel, authService, googleAPIService) => {
 
     const start_hour = body.start;
     const end_hour = body.end;
-    //check if start/end hours are out of range or undefined
-    if(start_hour === undefined || start_hour < 0 || start_hour > 24 || end_hour === undefined || end_hour < 0 || end_hour > 24){
-      return res.status(400).json({
-        data:null,
-        message:"Malformed Request"
-      });
-    }
 
     const [id, err1] = await authService.getLoggedInUserID(req.headers);
 
