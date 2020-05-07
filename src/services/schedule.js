@@ -104,7 +104,7 @@ const ScheduleService = () => {
         let currentTime = getUnix(startTime);
         let i = 0;
 
-        while (i < busyIntervals.length - 1) {
+        while (i < busyIntervals.length) {
             // TEST CODE
             // console.log(local(currentTime).toISOString(true));
             // console.log(busyIntervals[i].map(x => local(getUnix(x)).toISOString(true)));
@@ -244,7 +244,7 @@ const ScheduleService = () => {
 
             // Go through all branches and find max number of tasks scheduled
             let maxCount = 0;
-            console.log('\nTask: ' + currentTask.id);
+            // console.log('\nTask: ' + currentTask.id);
             // console.log('Branches: ');
             for (branch of allBranches) {
                 let count = 0;

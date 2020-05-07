@@ -42,9 +42,11 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             });
         });
 
+        const endSchedulingInterval = tasks[tasks.length - 1].due_date
+
         const freeBusyBody = {
             "timeMin": req.body.timeMin, // in UTC
-            "timeMax": tasks[tasks.length - 1].due_date, // in UTC
+            "timeMax": endSchedulingInterval, // in UTC
             "items": freeBusyItems
         };
 
@@ -66,6 +68,15 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             else
                 return 0;
         });
+
+        const lastEnd = googleBusyInts[googleBusyInts.length - 1][1]
+
+        // We want to add a fake busy interval for the last task due date to make sure we get free
+        // times up until this "end of scheduling interval" time
+        
+        if (moment(endSchedulingInterval).isAfter(lastEnd)) {
+            googleBusyInts.push([endSchedulingInterval, endSchedulingInterval])
+        }
 
         // TEST CODE - Get the user's free intervals
         // let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);        
@@ -124,18 +135,19 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             let taskEndMoment = taskStartMoment.clone();
             taskEndMoment.add(task.duration, "minutes");
 
-            taskStartString = taskStartMoment.tz(req.body.timeZone).toISOString(true);
-            let taskEndString = taskEndMoment.tz(req.body.timeZone).toISOString(true);
+            // Google Calendar needs the start and end time in local timezone
+            let taskStartStringTZ = taskStartMoment.tz(req.body.timeZone).toISOString(true);
+            let taskEndStringTZ = taskEndMoment.tz(req.body.timeZone).toISOString(true);
 
             let reqBody = {
                 "summary": task.name,
                 "description": task.description,
                 "start": {
-                    "dateTime": taskStartString,
+                    "dateTime": taskStartStringTZ,
                     "timeZone": req.body.timeZone
                 },
                 "end": {
-                    "dateTime": taskEndString,
+                    "dateTime": taskEndStringTZ,
                     "timeZone": req.body.timeZone
                 }
             }
@@ -143,7 +155,11 @@ const ScheduleController = (userModel, taskModel, authService, googleAPIService,
             if (calendarErr)
                 console.log('Error creating Google Calendar event!', calendarErr)
 
-            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, response.htmlLink, taskStartString, taskEndString);
+            // Our backend stores the time in UTC
+            let taskStartStringUTC = taskStartMoment.utc().toISOString(true);
+            let taskEndStringUTC = taskEndMoment.utc().toISOString(true);
+
+            let [confirmed_task, confirmErr] = await taskModel.confirmSchedule(id, response.id, targetCalendar, response.htmlLink, taskStartStringUTC, taskEndStringUTC);
             if (confirmErr)
                 console.log('Error confirming task!', confirmErr);
             else
