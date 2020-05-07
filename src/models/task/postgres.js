@@ -28,8 +28,7 @@ const TaskRepo = (postgres) => {
             client.release();
             console.log('Task Table Created');
             return null;
-        }
-        catch (err) {
+        } catch (err) {
             return err;
         }
     }
@@ -47,8 +46,7 @@ const TaskRepo = (postgres) => {
             const res = await client.query(createTaskSQL, values);
             client.release();
             return [res.rows[0], null];
-        }
-        catch (err) {
+        } catch (err) {
             return [null, err];
         }
     };
@@ -64,8 +62,7 @@ const TaskRepo = (postgres) => {
             const res = await client.query(getTaskByIDSQL, values);
             client.release();
             return [res.rows[0], null];
-        }
-        catch (err) {
+        } catch (err) {
             return [null, err];
         }
     };
@@ -86,7 +83,7 @@ const TaskRepo = (postgres) => {
             return [res.rows[0], ""]; //requires null because no error in this case
         } catch (err) {
             return [null, err]; // return null for the actual object, the error should not be null
-        } 
+        }
     }
 
     const getAllScheduledTasksSQL = `
@@ -95,13 +92,12 @@ const TaskRepo = (postgres) => {
 
     const getAllScheduledTasks = async (userID) => {
         const values = [userID];
-        try{
+        try {
             const client = await postgres.connect();
             const res = await client.query(getAllScheduledTasksSQL, values);
             client.release();
             return [res.rows, null] // error message is empty string
-        }
-        catch (err) {
+        } catch (err) {
             return [null, "Error at Scheduled"]; // return null  for the data if user's tasks DNE
         }
     }
@@ -112,13 +108,12 @@ const TaskRepo = (postgres) => {
 
     const getAllNotScheduledTasks = async (userID) => {
         const values = [userID];
-        try{
+        try {
             const client = await postgres.connect();
             const res = await client.query(getAllNotScheduledTasksSQL, values);
             client.release();
             return [res.rows, null] // error message is empty string 
-        }
-        catch (err) {
+        } catch (err) {
             return [null, "Error at Not Scheduled"]; // return null  for the data if user's tasks DNE
         }
     }
@@ -129,14 +124,13 @@ const TaskRepo = (postgres) => {
 
     const getTasksForScheduling = async (userID, task_ids) => {
         const values = [userID, task_ids];
-        console.log(values);
+        // console.log(values);
         try {
             const client = await postgres.connect();
             const res = await client.query(getTasksForSchedulingSQL, values);
             client.release();
             return [res.rows, null] // error message is empty string 
-        }
-        catch (err) {
+        } catch (err) {
             return [null, "Error retrieving tasks for scheduling"]; // return null  for the data if user's tasks DNE
         }
     }
@@ -146,7 +140,7 @@ const TaskRepo = (postgres) => {
         RETURNING *;
     `
 
-    const scheduleTask = async(taskID, scheduledTime) => {
+    const scheduleTask = async (taskID, scheduledTime) => {
         const values = [taskID, scheduledTime];
         try {
             const client = await postgres.connect();
@@ -164,10 +158,10 @@ const TaskRepo = (postgres) => {
         RETURNING *;
     `
 
-    const confirmSchedule = async(taskID, eventID, calendarID, eventURL, startTime, endTime) => {
+    const confirmSchedule = async (taskID, eventID, calendarID, eventURL, startTime, endTime) => {
         const values = [taskID, eventID, calendarID, eventURL, startTime, endTime];
         try {
-            const client = await postgres.connect(); 
+            const client = await postgres.connect();
             const res = await client.query(confirmScheduleSQL, values);
             client.release();
             return [res.rows[0], ""];
@@ -182,7 +176,7 @@ const TaskRepo = (postgres) => {
         RETURNING scheduled, event_id;
     `
 
-    const deleteTask = async(taskID) => {
+    const deleteTask = async (taskID) => {
         const values = [taskID];
         try {
             const client = await postgres.connect();

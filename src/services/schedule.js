@@ -1,179 +1,297 @@
 const moment = require('moment-timezone');
+const _ = require('lodash');
 const SECONDS_PER_MINUTE = 60;
 
 const ScheduleService = () => {
-    // Checks if the given Moment object is withint the user's hours of operation.
-    // Arguments:
-    //      momentObj (Moment) -> A moment object.
-    //      startHr (integer) -> The beginning of the user's hours of operation.
-    //      endHr (integer) -> The end of the user's hours of operation.
-    // Returns:
-    //      0, if within hours of operation.
-    //      -1, if before
-    //      1, if after
-    function validTime(momentObj, startHr, endHr) {
-        if (momentObj.hour() >= startHr && momentObj.hour() < endHr)
-            return 0;
-        else if (momentObj.hour() < startHr)
-            return -1;
-        else if (momentObj.hour() >= endHr)
-            return 1;
+    // Helper function to convert a time into its seconds since epoch equivalent
+    function getUnix(time) {
+        return moment(time).unix();
     }
 
-    // Checks if the given task will end before its due date.
-    // Arguments:
-    //      task (Task object) -> A task object, as defined by the task model.
-    // Returns:
-    //      True if the task is valid, False otherwise.
-    function isValidTask(task) {
-        const due = moment(task.due_date).unix();
-        const duration = task.duration * SECONDS_PER_MINUTE;
-        const start = task.scheduled_time;
-        return start + duration <= due;
+    /**
+     * Summary. Gets intervals of free time between the given start and end time.
+     * 
+     * Description. Free time intervals are created from non-busy intervals within the user's
+     * defined hours of operation. The created intervals will not overlap with each other.
+     * 
+     * @see GoogleApiService.getFreeBusyIntervalsWithToken()
+     * 
+     * @param {*}       startTime           Earliest time a free interval can start.
+     * @param {string}  localTZ             The user's local timezone.
+     * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
+     * @param {Array}   hoursOfOpEnd        End of hours of operation.       
+     * @param {Array}   busyIntervals       An array of busyInterval arrays.
+     * 
+     * @return {Array} An array of free intervals in Unix time.
+     */
+    const getFreeIntervals = async (startTime, localTZ, hoursOfOpStart, hoursOfOpEnd, busyIntervals) => {
+        /* 
+         * Assuming that startTime is at or after the beginning of hours of operation but before
+         * the end of hours of operation.
+         */
+
+        // Constants
+        const START = 0;
+        const END = 1;
+
+        // For when we allow the user more flexibility with start time:
+        // const hoursOfOpStartArr = hoursOfOpStart.split(':').map(x => parseInt(x));
+        // const hoursOfOpEndArr = hoursOfOpEnd.split(':').map(x => parseInt(x));
+
+        const hoursOfOpStartArr = [hoursOfOpStart, 0];
+        const hoursOfOpEndArr = [hoursOfOpEnd, 0];
+
+        // Helper function to check if a time is within a given interval
+        function inInterval(unixTime, interval) {
+            return (
+                unixTime >= getUnix(interval[START]) &&
+                unixTime < getUnix(interval[END])
+            )
+        }
+
+        // Helper function for converting to moment object in local time
+        function local(unixTime) {
+            return moment.unix(unixTime).tz(localTZ);
+        }
+
+        // Helper function to check if a time is within hours of operation
+        function inHoursOfOp(unixTime) {
+            const localTime = local(unixTime);
+
+            const afterHoursStart = (
+                localTime.hour() >= hoursOfOpStartArr[0] &&
+                localTime.minute() >= hoursOfOpStartArr[1]
+            );
+
+            const beforeHoursEnd = (
+                localTime.hour() < hoursOfOpEndArr[0] ||
+                (localTime.hour() == hoursOfOpEndArr[0] &&
+                    localTime.minute() < hoursOfOpEndArr[1])
+            );
+
+            return afterHoursStart && beforeHoursEnd;
+        }
+
+        // Helper function to get beginning of next day
+        function getStartTime(unixTime) {
+            let currentDay = moment.unix(unixTime).tz(localTZ);
+            currentDay.hour(hoursOfOpStartArr[0]);
+            currentDay.minute(hoursOfOpStartArr[1]);
+            currentDay.second(0).millisecond(0);
+            unixCurrent = currentDay.unix();
+
+            let nextDay = currentDay.clone();
+            nextDay.add(1, 'days');
+            nextDay.hour(hoursOfOpStartArr[0]);
+            nextDay.minute(hoursOfOpStartArr[1]);
+            nextDay.second(0).millisecond(0);
+            unixNext = nextDay.unix();
+
+            return (unixCurrent < unixTime) ? unixNext : unixCurrent;
+        }
+
+        // Helper function to get end of current day
+        function getEndTime(unixTime) {
+            let currentDay = moment.unix(unixTime).tz(localTZ);
+            currentDay.hour(hoursOfOpEndArr[0]);
+            currentDay.minute(hoursOfOpEndArr[1]);
+            currentDay.second(0).millisecond(0);
+            return currentDay.unix();
+        }
+
+        // Create free intervals
+        const freeIntervals = [];
+        let currentTime = getUnix(startTime);
+        let i = 0;
+
+        while (i < busyIntervals.length) {
+            // TEST CODE
+            // console.log(local(currentTime).toISOString(true));
+            // console.log(busyIntervals[i].map(x => local(getUnix(x)).toISOString(true)));
+            // console.log();
+
+            // If current time is outside hours of operation, fast-forward
+            if (!inHoursOfOp(currentTime)) {
+                currentTime = getStartTime(currentTime);
+            } else if (inInterval(currentTime, busyIntervals[i])) {
+                // If current time is in a busy interval, go to next iteration
+                currentTime = getUnix(busyIntervals[i][END]);
+                i++;
+            } else {
+                // Create free interval
+                busyStart = getUnix(busyIntervals[i][START]);
+                busyEnd = getUnix(busyIntervals[i][END]);
+
+                /*
+                 * If the start of the current busy interval is behind the current time, 
+                 * then we skip over the current busy interval.
+                 */
+                if (busyStart > currentTime) {
+                    endTime = getEndTime(currentTime);
+
+                    endOfInterval = Math.min(busyStart, endTime);
+                    /* 
+                     * If we are going to the end of the day rather than the start of the
+                     * current busy interval, then we do NOT want to advance.
+                     */
+                    if (endOfInterval == endTime) {
+                        i--;
+                    }
+
+                    interval = [currentTime, endOfInterval];
+                    freeIntervals.push(interval);
+
+                    /* 
+                     * We skip to either the end of the current busy interval or the end
+                     * of the day, whichever comes first.
+                     * This works because if endOfInterval == endTime, that means that
+                     * endTime < busyStart < busyEnd.
+                     */
+                    currentTime = Math.min(busyEnd, endTime);
+                }
+
+                i++;
+            }
+        }
+
+        return freeIntervals;
     }
 
-    // Create free intervals from busy Moment intervals in user's local time
-    // Arguments:
-    //      timeMin (UTC datetime) -> The earliest time to start scheduling.
-    //      timeZone (string) -> The user's local timezone.
-    //      busyMomInts ([Moment]) -> An array of Moment objects representing the 
-    //          user's busy intervals.
-    //      startHr (integer) -> The user's start to hours of operation.
-    //      endHr (integer) -> The user's end to hours of operation.
-    // Returns:
-    //      An array of free intervals in formatted date strings (local time).
-    const createFreeIntervals = async(timeMin, timeZone, busyMomInts, startHr, endHr) => {
-        let freeInts = [];
-        let lastEndTime = moment(timeMin).tz(timeZone);
-        busyMomInts.forEach((busyInt) => {
-            // Because of overalpping busy intervals, we need this check
-            if (lastEndTime.isBefore(busyInt[0])) {
-                // Check if the interval happens on the same day
-                if (lastEndTime.isSame(busyInt[0], "day")) {
-                    // Check if the interval is within hours of operation
-                    if (validTime(lastEndTime, startHr, endHr) == 0 && validTime(busyInt[0], startHr, endHr) == 0)
-                        freeInts.push([lastEndTime.format(), busyInt[0].format()]);
-                    // Check if the interval starts before hours of operation... 
-                    else if (validTime(lastEndTime, startHr, endHr) == -1) {
-                        let intStart = lastEndTime.clone();
-                        intStart.hour(startHr).minute(0).second(0).millisecond(0);
-                        // ... and ends within
-                        if (validTime(busyInt[0], startHr, endHr) == 0)
-                            freeInts.push([intStart.format(), busyInt[0].format()])
-                        // ... and ends after
-                        else if (validTime(busyInt[0], startHr, endHr) == 1) {
-                            let intEnd = busyInt[0].clone();
-                            intEnd.hour(endHr).minute(0).second(0).millisecond(0);
-                            freeInts.push([intStart.format(), intEnd.format()]);
-                        }
-                        // If the interval ends before hours of operation, do nothing!
-                    }
-                }
-                // At this point in the code, we don't need to worry if the interval is in reverse
-                // since we already checked if lastEndTime comes before busyInt[0], so this is just
-                // a check if the interval ends one day in the future.
-                else if (busyInt[0].date() - lastEndTime.date() == 1) {
-                    // Check if the start is within hours of operation
-                    if (validTime(lastEndTime, startHr, endHr) == 0) {
-                        let intEnd = lastEndTime.clone();
-                        intEnd.hour(endHr).minute(0).second(0).millisecond(0);
-                        freeInts.push([lastEndTime.format(), intEnd.format()]);
-                    }
-                    // Check if the end is within hours of operation
-                    if (validTime(busyInt[0], startHr, endHr) == 0) {
-                        let intStart = busyInt[0].clone();
-                        intStart.hour(startHr).minute(0).second(0).millisecond(0);
-                        freeInts.push([intStart.format(), busyInt[0].format()]);
-                    }
-                    // If neither are within hours of operation, do nothing!
-                }
-                // If the interval ends greater than a day in the future...
-                else if (busyInt[0].date() - lastEndTime.date() > 1) {
-                    // Then we can add the whole day
-                    let intStart = lastEndTime.clone()
-                    intStart.hour(startHr).minute(0).second(0).millisecond(0);
-                    let intEnd = intStart.clone();
-                    intEnd.hour(endHr).minute(0).second(0).millisecond(0);
+    /**
+     * Summary. Fits the given tasks into the user's free intervals.
+     * 
+     * Description. Sets the scheduled_time field of the given task objects. If a task cannot be scheduled,
+     * then its scheduled_time field is set to null.
+     * 
+     * @see ScheduleService.getFreeIntervals()
+     * 
+     * @param {Array}   tasks               An array of task objects, sorted from earliest to latest due date.
+     * @param {*}       startTime           Earliest time a free interval can start.
+     * @param {string}  localTZ             The user's local timezone.
+     * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
+     * @param {Array}   hoursOfOpEnd        End of hours of operation.       
+     * @param {Array}   busyIntervals       An array of busyInterval arrays. 
+     * 
+     * @returns {Array} An array of task objects, in the original order, but with set scheduled times.
+     */
+    const scheduleTasks = async (tasks, startTime, localTZ, hoursOfOpStart, hoursOfOpEnd, busyIntervals) => {
 
-                    freeInts.push([intStart.format(), intEnd.format()]);
+        // Helper function to check that a task ends before the end of current interval
+        function isValid(task) {
+            const due = getUnix(task.due_date);
+            const duration = task.duration * SECONDS_PER_MINUTE;
+            const scheduledTime = task.scheduled_time;
+
+            return (scheduledTime + duration <= due);
+        }
+
+        // Function to recursively schedule tasks
+        function solve(tasks, freeIntervals) {
+            if (tasks.length == 0) {
+                return tasks;
+            }
+
+            const allBranches = [];
+            const START = 0;
+            const END = 1;
+
+            let currentTask = tasks[0];
+            const taskDuration = currentTask.duration * SECONDS_PER_MINUTE;
+
+            for (let i = 0; i < freeIntervals.length; i++) {
+                let interval = freeIntervals[i];
+                let iDuration = interval[END] - interval[START];
+                let currentTaskCopy = _.cloneDeep(currentTask);
+
+                if (taskDuration <= iDuration) {
+                    // Set task scheduled time to beginning of interval
+                    currentTaskCopy.scheduled_time = interval[START];
+
+                    // Check that the current task would complete before end of interval
+                    if (!isValid(currentTaskCopy)) {
+                        // Unable to schedule for any of the remaining intervals
+                        break;
+                    }
+
+                    // Remove/update the scheduled interval from free intervals
+                    let newFreeIntervals = freeIntervals.slice();
+
+                    if (taskDuration < iDuration) {
+                        // Create new free intervals array with new interval
+                        let newInterval = [interval[START] + taskDuration, interval[END]];
+
+                        newFreeIntervals = freeIntervals.slice(0, i)
+                            .concat([newInterval])
+                            .concat(freeIntervals.slice(i + 1));
+                    } else if (taskDuration == iDuration) {
+                        newFreeIntervals = freeIntervals.slice();
+                        newFreeIntervals.splice(i, 1);
+                    }
+
+                    let restTasks = tasks.slice(1);
+                    let result = solve(restTasks, newFreeIntervals);
+                    let solution = [currentTaskCopy].concat(result);
+                    allBranches.push(solution);
                 }
             }
-            // We can't skip any days!
-            if (busyInt[0].date() > lastEndTime.date() + 1) {
-                lastEndTime.add(1, "days");
-                lastEndTime.hour(startHr).minute(0).second(0).millisecond(0);
-            } else
-                lastEndTime = busyInt[1];
-        });
 
-        return freeInts;
-    }
+            if (allBranches.length == 0) {
+                // It's impossible to schedule this task, so let all other tasks try
+                currentTask.scheduled_time = null;
+                let restTasks = tasks.slice(1);
+                return [currentTask].concat(solve(restTasks, freeIntervals));
+            }
 
-    // Arguments:
-    //      tasks (Task Object) -> An array of task objects, as defined by the task model. 
-    //          Sorted from earliest to latest due date.
-    //      freeTime ([[integer, integer]]) -> An array of two-element arrays, each 
-    //          representing an interval of free time. The times should be in seconds since
-    //          epoch.
-    // Returns:
-    //      An array of Task objects with scheduled start times. If a task cannot be scheduled,
-    //      its start time is set to null.
-    const scheduleTasks = (tasks, freeTime) => {
-        if (tasks.length == 0)
-            return tasks;
+            // Go through all branches and find max number of tasks scheduled
+            let maxCount = 0;
+            // console.log('\nTask: ' + currentTask.id);
+            // console.log('Branches: ');
+            for (branch of allBranches) {
+                let count = 0;
+                // console.log(branch);
+                for (task of branch) {
+                    if (task.scheduled_time != null) {
+                        count++;
+                    }
+                }
+                maxCount = count > maxCount ? count : maxCount;
+            }
 
-        let currTask = tasks[0]; // assume ordered by due date (earliest to latest)
-        let tDuration = currTask.duration * SECONDS_PER_MINUTE;
-
-        for (let i = 0; i < freeTime.length; i++) {
-            let freeInt = freeTime[i];
-            let iDuration = freeInt[1] - freeInt[0];
-
-            if (tDuration <= iDuration) {
-                // Set task start time to beginning of interval
-                currTask.scheduled_time = freeInt[0];
-
-                // Check that start_time + duration <= due_date
-                if (!isValidTask(currTask)) {
-                    // We can't schedule the event
-                    currTask.scheduled_time = null;
-                    return [currTask].concat(scheduleTasks(tasks.slice(1), freeTime));
+            // Choose solution with max number
+            for (branch of allBranches) {
+                let count = 0;
+                for (task of branch) {
+                    if (task.scheduled_time != null) {
+                        count++;
+                    }
                 }
 
-                let newFreeTime;
-                if (tDuration < iDuration) {
-                    let newInt = [freeInt[0] + tDuration, freeInt[1]];
-                    newFreeTime = [newInt].concat(freeTime.slice(0, i).concat(freeTime.slice(i + 1)));
-                } else if (tDuration == iDuration)
-                    newFreeTime = freeTime.slice(0, i).concat(freeTime.slice(i + 1))
-
-                // Sort newFreeTime
-                newFreeTime.sort((intA, intB) => {
-                    if (intA[0] < intB[0])
-                        return -1;
-                    else if (intA[0] == intB[0])
-                        return 0;
-                    else
-                        return 1;
-                });
-
-                if (newFreeTime[0][0] == currTask.scheduled_time)
-                    newFreeTime.splice(i, 1);
-
-                let result = scheduleTasks(tasks.slice(1), newFreeTime);
-                return [currTask].concat(result);
+                if (count == maxCount) {
+                    // console.log('\nTask: ' + currentTask.id);
+                    // console.log('Returning');
+                    // console.log(branch);
+                    return branch;
+                }
             }
-        };
+        }
 
-        // Not solvable with any placement of the first event, solve the rest
-        return [currTask].concat(scheduleTasks(tasks.slice(1), freeTime));
+        const freeIntervals = await getFreeIntervals(startTime, localTZ, hoursOfOpStart, hoursOfOpEnd, busyIntervals);
+        const result = solve(tasks, freeIntervals);
+        for (let i = 0; i < result.length; i++) {
+            if (result[i].scheduled_time != null) {
+                result[i].scheduled_time = moment.unix(result[i].scheduled_time).toISOString();
+            }
+        }
+
+        return result;
     }
 
     return {
-        createFreeIntervals,
-        scheduleTasks
+        getFreeIntervals, // returned only for debugging purposes!
+        scheduleTasks,
     }
 }
+
 
 module.exports = {
     ScheduleService
