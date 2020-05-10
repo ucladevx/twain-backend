@@ -280,6 +280,23 @@ returns
 }
 ```
 
+### Get all completed tasks for a user
+
+GET /api/tasks/completedTasks
+
+returns
+
+```
+{
+    "data": [
+      <TASK_MODEL_ABOVE>,
+      <TASK_MODEL_ABOVE>,
+      ...
+    ],
+    "error": "<ERROR_MESSAGE>"
+}
+```
+
 ### Delete Tasks by ID (Array of IDs)
 
 DELETE /api/tasks
