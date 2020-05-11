@@ -40,9 +40,8 @@ const TaskModel = (repo) => {
         return [task, err];
     };
     const editTask = async (changesReq, user_id) => {
-        console.log('edit task is running in index.js');
-        const [changes, err] = await repo.editTask(changesReq, user_id);
-        return [changes, err];
+        const [task, err] = await repo.editTask(changesReq, user_id);
+        return [task, err];
     };
 
     return {

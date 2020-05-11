@@ -39,10 +39,8 @@ const TaskModel = (repo) => {
         const [task, err] = await repo.deleteTask(taskID);
         return [task, err];
     };
-    const editTask = async (changesReq, user_id) => {
-        console.log('edit task is running in index.js');
-        const [changes, err] = await repo.editTask(changesReq, user_id);
-        return [changes, err];
+    const editTask = async (name, description, duration, due_date, user_id) => {
+        return repo.editTask(name, description, duration, due_date, user_id);
     };
 
     return {
@@ -55,7 +53,7 @@ const TaskModel = (repo) => {
         scheduleTask,
         confirmSchedule,
         deleteTask,
-        editTask,
+        editTask, // just added
     };
 }
 

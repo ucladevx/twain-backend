@@ -2,50 +2,6 @@ const express = require('express');
 const TaskController = (taskModel, userModel, authService, googleAPIService) => {
     const router = express.Router();
 
-    router.patch('/me', async (req, res) => {
-         if (!req.body)
-            return res.status(400).json({
-                data: null,
-                error: "Malformed Request"
-            });
-        if (!req.headers)
-            return res.status(400).json({
-                error: "Malformed Request"
-            });
-        const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        if (user_err) {
-            return res.status(400).json({
-                data: null,
-                error: "Malformed Request " + user_err
-            });
-        }
-        // get all the info from what the user wants to edit and register it into a dictionary
-        const changesReq = {};
-        const body = req.body;
-        if (body.name)
-            changesReq["name"] = body.name;
-        if (body.description)
-            changesReq["description"] = body.description;
-        if (body.duration)
-            changesReq["duration"] = body.duration;
-        if (body.due_date)
-            changesReq["due_date"] = body.due_date;
-        
-        console.log(changesReq);
-        // call function to edit with the dictionary
-        const [change, edit_err] = await taskModel.editTask(changesReq, user_id);
-        if (edit_err)
-            return res.status(400).json({
-                "data": null,
-                "error": "Malformed Request in Edit Task: " + edit_err,
-            });
-
-        return res.status(200).json({
-            "edit": changesReq,
-            "error": edit_err,
-        });
-    })
-
     router.get('/me', async (req, res)=> {
         if (!req.headers)
             return res.status(400).json({
@@ -145,6 +101,34 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
             data: task,
             error: err2 ? err2.message : ""
         })
+    })
+
+    // TODO: Define PATCH !!
+    router.patch('/me', async (req, res) => {
+        if (!req.headers)
+            return res.status(400).json({
+                message: "Malformed Request"
+            });
+        const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
+        if (user_err) {
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request " + user_err
+            });
+        }
+        const [task, err1] = await taskModel.getAllNotScheduledTasks(user_id);
+        if (err1) {
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Scheduled Task List: " + err1,
+            });
+        }
+        return res.status(200).json({
+            "data"L {
+                "not_scheduled": task
+            },
+            "error"L '',
+        });
     })
 
     //my attempt to make a POST request for task-complete:

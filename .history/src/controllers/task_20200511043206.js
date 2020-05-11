@@ -20,29 +20,25 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
             });
         }
         // get all the info from what the user wants to edit and register it into a dictionary
-        const changesReq = {};
+        const edit = {};
         const body = req.body;
         if (body.name)
-            changesReq["name"] = body.name;
+            edit["name"] = body.name;
         if (body.description)
-            changesReq["description"] = body.description;
+            edit["description"] = body.description;
         if (body.duration)
-            changesReq["duration"] = body.duration;
+            edit["duration"] = body.duration;
         if (body.due_date)
-            changesReq["due_date"] = body.due_date;
+            edit["due_date"] = body.due_date;
         
-        console.log(changesReq);
-        // call function to edit with the dictionary
-        const [change, edit_err] = await taskModel.editTask(changesReq, user_id);
-        if (edit_err)
+        if (edit == {})
             return res.status(400).json({
-                "data": null,
-                "error": "Malformed Request in Edit Task: " + edit_err,
+                data: null,
+                error: "Malformed Request"
             });
-
         return res.status(200).json({
-            "edit": changesReq,
-            "error": edit_err,
+            "edit": edit,
+            "error": '',
         });
     })
 

@@ -188,37 +188,10 @@ const TaskRepo = (postgres) => {
         }
     }
 
-    /*
-    const createTaskSQL = `
-        TODO
-    `;
-    */
-
-    const createTask = async (name, description, duration, due_date, user_id) => {
-        const values = [name, description, duration, due_date, user_id];
-        try {
-            const client = await postgres.connect();
-            const res = await client.query(createTaskSQL, values);
-            client.release();
-            return [res.rows[0], null];
-        } catch (err) {
-            return [null, err];
-        }
-    };
+    // const editTaskSQL
 
     const editTask = async (changesReq, user_id) => {
-        console.log('edit task is running in postgres');
-        console.log(changesReq);
-        console.log('userID: ' + user_id);
-        const values = [changesReq, user_id];
-        try {
-            const client = await postgres.connect();
-            const res = await client.query(editTaskSQL, values);
-            client.release();
-            return [res.rows[0], null];
-        } catch (err) {
-            return [null,err];
-        }
+        return [changesReq,user_id];
     }
 
     return {

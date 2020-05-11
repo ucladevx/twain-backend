@@ -31,18 +31,20 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
         if (body.due_date)
             changesReq["due_date"] = body.due_date;
         
-        console.log(changesReq);
         // call function to edit with the dictionary
         const [change, edit_err] = await taskModel.editTask(changesReq, user_id);
+        /*
         if (edit_err)
             return res.status(400).json({
                 "data": null,
                 "error": "Malformed Request in Edit Task: " + edit_err,
             });
+        */
+        console.log('change: ' + change);
 
         return res.status(200).json({
             "edit": changesReq,
-            "error": edit_err,
+            "error": '',
         });
     })
 

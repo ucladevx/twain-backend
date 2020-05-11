@@ -3,46 +3,27 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
     const router = express.Router();
 
     router.patch('/me', async (req, res) => {
-         if (!req.body)
-            return res.status(400).json({
-                data: null,
-                error: "Malformed Request"
-            });
         if (!req.headers)
             return res.status(400).json({
-                error: "Malformed Request"
+                message: "Malformed Request"
             });
         const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        if (user_err) {
+        if (user_id == null) {
             return res.status(400).json({
                 data: null,
                 error: "Malformed Request " + user_err
             });
         }
-        // get all the info from what the user wants to edit and register it into a dictionary
-        const changesReq = {};
-        const body = req.body;
-        if (body.name)
-            changesReq["name"] = body.name;
-        if (body.description)
-            changesReq["description"] = body.description;
-        if (body.duration)
-            changesReq["duration"] = body.duration;
-        if (body.due_date)
-            changesReq["due_date"] = body.due_date;
-        
-        console.log(changesReq);
-        // call function to edit with the dictionary
-        const [change, edit_err] = await taskModel.editTask(changesReq, user_id);
-        if (edit_err)
+        const [task, err] = await taskModel.getAllNotScheduledTasks(user_id);
+        if(err != null){
             return res.status(400).json({
                 "data": null,
-                "error": "Malformed Request in Edit Task: " + edit_err,
+                "error": "Malformed Request in Not Scheduled Task List: " + err,
             });
-
+        }
         return res.status(200).json({
-            "edit": changesReq,
-            "error": edit_err,
+            "task": task,
+            "error": '',
         });
     })
 
