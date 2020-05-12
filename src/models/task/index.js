@@ -39,10 +39,9 @@ const TaskModel = (repo) => {
         const [task, err] = await repo.deleteTask(taskID);
         return [task, err];
     };
-    const editTask = async (changesReq, user_id) => {
-        console.log('edit task is running in index.js');
-        const [changes, err] = await repo.editTask(changesReq, user_id);
-        return [changes, err];
+    const editTask = async (taskID, updatedTask) => {
+        const [task, err] = await repo.editTask(taskID, updatedTask);
+        return [task, err];
     };
 
     return {

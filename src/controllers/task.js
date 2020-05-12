@@ -2,50 +2,6 @@ const express = require('express');
 const TaskController = (taskModel, userModel, authService, googleAPIService) => {
     const router = express.Router();
 
-    router.patch('/me', async (req, res) => {
-         if (!req.body)
-            return res.status(400).json({
-                data: null,
-                error: "Malformed Request"
-            });
-        if (!req.headers)
-            return res.status(400).json({
-                error: "Malformed Request"
-            });
-        const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
-        if (user_err) {
-            return res.status(400).json({
-                data: null,
-                error: "Malformed Request " + user_err
-            });
-        }
-        // get all the info from what the user wants to edit and register it into a dictionary
-        const changesReq = {};
-        const body = req.body;
-        if (body.name)
-            changesReq["name"] = body.name;
-        if (body.description)
-            changesReq["description"] = body.description;
-        if (body.duration)
-            changesReq["duration"] = body.duration;
-        if (body.due_date)
-            changesReq["due_date"] = body.due_date;
-        
-        console.log(changesReq);
-        // call function to edit with the dictionary
-        const [change, edit_err] = await taskModel.editTask(changesReq, user_id);
-        if (edit_err)
-            return res.status(400).json({
-                "data": null,
-                "error": "Malformed Request in Edit Task: " + edit_err,
-            });
-
-        return res.status(200).json({
-            "edit": changesReq,
-            "error": edit_err,
-        });
-    })
-
     router.get('/me', async (req, res)=> {
         if (!req.headers)
             return res.status(400).json({
@@ -245,6 +201,61 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
             "error": null,
         })
     });
+
+    router.patch('/:id', async (req, res) => {
+        const params = req.params;
+        const id = parseInt(params.id, 10);
+
+        // Get the user_id of the user sending the request
+        const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
+        if (err1) {
+            return res.status(400).json({
+                message: err1.message,
+            });
+        }
+        const [task, err2] = await taskModel.getTask(id);
+        if (!req.body)
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request"
+            });
+        if (user_id_from_request != task.user_id) {
+            // Make sure the requestor has access to this object, if not, Access Denied
+            return res.status(403).json({
+                data: {},
+                error: "Access Denied"
+            });
+        }
+        // get all the info from what the user wants to edit and register it into dictionary
+        const updatedTask = {};
+        const body = req.body;
+        if (body.name)
+            updatedTask["name"] = body.name;
+        if (body.description)
+            updatedTask["description"] = body.description;
+        if (body.duration)
+            updatedTask["duration"] = body.duration;
+        if (body.due_date)
+            updatedTask["due_date"] = body.due_date;
+        // call function to edit with the dictionary
+        var str = [];
+        for (var key in updatedTask)
+            if (updatedTask.hasOwnProperty(key)) {
+                str.push(key + "=" + "\'" + updatedTask[key] + "\'");
+            }
+        const updatedStr = str.join(",");
+        
+        const [update, edit_err] = await taskModel.editTask(id, updatedStr);
+        if (edit_err)
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Edit Task: " + edit_err,
+            });
+        return res.status(200).json({
+            "task": update,
+            "error": edit_err,
+        });
+    })
 
     return router;
 }
