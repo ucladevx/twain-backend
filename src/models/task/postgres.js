@@ -86,6 +86,22 @@ const TaskRepo = (postgres) => {
         }
     }
 
+    const getAllCompletedTasksSQL = `
+        SELECT * FROM tasks WHERE user_id=$1 AND completed=TRUE ORDER BY completed_time DESC;
+    `;
+
+    const getAllCompletedTasks = async (userID) => {
+        const values = [userID];
+        try {
+            const client = await postgres.connect();
+            const res = await client.query(getAllCompletedTasksSQL, values);
+            client.release();
+            return [res.rows, null] // error message is empty string
+        } catch (err) {
+            return [null, "Error at Completed Tasks"]; // return null for the data if user's tasks DNE
+        }
+    }
+
     const getAllScheduledTasksSQL = `
         SELECT * FROM tasks WHERE user_id=$1 AND scheduled=TRUE ORDER BY start_time;
     `;
@@ -193,6 +209,7 @@ const TaskRepo = (postgres) => {
         createTask,
         getTaskByID,
         setTaskCompleted,
+        getAllCompletedTasks,
         getAllNotScheduledTasks,
         getTasksForScheduling,
         getAllScheduledTasks,

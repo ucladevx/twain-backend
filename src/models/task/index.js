@@ -14,7 +14,10 @@ const TaskModel = (repo) => {
         const [task, err] = await repo.setTaskCompleted(taskID);
         return [task, err];
     };
-
+    const getAllCompletedTasks = async (userID) => {
+        const [task, err] = await repo.getAllCompletedTasks(userID);
+        return [task, err];
+    };
     const getAllScheduledTasks = async (userID) => {
         const [task, err] = await repo.getAllScheduledTasks(userID);
         return [task, err];
@@ -44,6 +47,7 @@ const TaskModel = (repo) => {
         createTask,
         getTask,
         setTaskCompleted,
+        getAllCompletedTasks,
         getAllScheduledTasks,
         getAllNotScheduledTasks,
         getTasksForScheduling,

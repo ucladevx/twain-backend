@@ -37,6 +37,31 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
         });
     })
 
+router.get('/completedTasks', async (req, res)=> {
+    if (!req.headers)
+        return res.status(400).json({
+            message: "Malformed Request"
+        });
+    const [user_id, user_err] = await authService.getLoggedInUserID(req.headers);
+    if (user_id == null) {
+        return res.status(400).json({
+            data: null,
+            error: "Malformed Request " + user_err
+        });
+    }
+    const [completed_tasks, err] = await taskModel.getAllCompletedTasks(user_id);
+    if(err != null){
+        return res.status(400).json({
+            "data": null,
+            "error": "Malformed Request in Completed Task List: " + err,
+        });
+    }
+    return res.status(200).json({
+        "data": completed_tasks,
+        "error": '',
+    });
+})
+
     router.get('/:id', async (req, res) => {
         const params = req.params;
         const id = parseInt(params.id, 10);
