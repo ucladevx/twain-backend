@@ -110,11 +110,11 @@ const ScheduleService = () => {
 
     while (i < busyIntervals.length) {
       // TEST CODE
-      console.log(local(currentTime).toISOString(true));
-      console.log(
-        busyIntervals[i].map((x) => local(getUnix(x)).toISOString(true)),
-      );
-      console.log();
+      // console.log(local(currentTime).toISOString(true));
+      // console.log(
+      //   busyIntervals[i].map((x) => local(getUnix(x)).toISOString(true)),
+      // );
+      // console.log();
 
       // If current time is outside hours of operation, fast-forward
       if (!inHoursOfOp(currentTime)) {
@@ -309,7 +309,7 @@ const ScheduleService = () => {
       busyIntervals,
     );
 
-    console.log(freeIntervals);
+    // console.log(freeIntervals);
 
     const result = solve(tasks, freeIntervals);
     for (let i = 0; i < result.length; i++) {
