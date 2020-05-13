@@ -87,7 +87,7 @@ const TaskRepo = (postgres) => {
     }
 
     const getAllCompletedTasksSQL = `
-        SELECT * FROM tasks WHERE user_id=$1 AND completed=TRUE ORDER BY start_time;
+        SELECT * FROM tasks WHERE user_id=$1 AND completed=TRUE ORDER BY completed_time DESC;
     `;
 
     const getAllCompletedTasks = async (userID) => {

@@ -53,7 +53,7 @@ router.get('/completedTasks', async (req, res)=> {
     if(err != null){
         return res.status(400).json({
             "data": null,
-            "error": "Malformed Request in Scheduled Task List: " + err,
+            "error": "Malformed Request in Completed Task List: " + err,
         });
     }
     return res.status(200).json({

@@ -16,7 +16,7 @@ const UserRepo = (postgres) => {
       hours_end text,
       primary_calendar text,
       relevant_calendars text,
-      weekend_setting BOOLEAN, 
+      weekend_setting boolean, 
       created_at timestamptz DEFAULT NOW(),
       updated_at timestamptz DEFAULT NOW()
     );`;
