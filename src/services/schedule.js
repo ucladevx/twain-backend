@@ -41,11 +41,8 @@ const ScheduleService = () => {
      */
 
     // For when we allow the user more flexibility with start time:
-    // const hoursOfOpStartArr = hoursOfOpStart.split(':').map(x => parseInt(x));
-    // const hoursOfOpEndArr = hoursOfOpEnd.split(':').map(x => parseInt(x));
-
-    const hoursOfOpStartArr = [hoursOfOpStart, 0];
-    const hoursOfOpEndArr = [hoursOfOpEnd, 0];
+    const hoursOfOpStartArr = hoursOfOpStart.split(':').map(x => parseInt(x));
+    const hoursOfOpEndArr = hoursOfOpEnd.split(':').map(x => parseInt(x));
 
     // Helper function to check if a time is within a given interval
     function inInterval(unixTime, interval) {
