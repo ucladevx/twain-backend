@@ -226,26 +226,17 @@ const TaskController = (taskModel, userModel, authService, googleAPIService) => 
                 error: "Access Denied"
             });
         }
-        // get all the info from what the user wants to edit and register it into dictionary
-        const updatedTask = {};
+
+        // get all the info from what the user wants to edit and change it into a string
         const body = req.body;
-        if (body.name)
-            updatedTask["name"] = body.name;
-        if (body.description)
-            updatedTask["description"] = body.description;
-        if (body.duration)
-            updatedTask["duration"] = body.duration;
-        if (body.due_date)
-            updatedTask["due_date"] = body.due_date;
-        // call function to edit with the dictionary
-        var str = [];
-        for (var key in updatedTask)
-            if (updatedTask.hasOwnProperty(key)) {
-                str.push(key + "=" + "\'" + updatedTask[key] + "\'");
+        const updates = [];
+        for (let key in body)
+            if (body.hasOwnProperty(key)) {
+                updates.push(key + "=" + "\'" + body[key] + "\'");
             }
-        const updatedStr = str.join(",");
+        const updatedTask = updates.join(",");
         
-        const [update, edit_err] = await taskModel.editTask(id, updatedStr);
+        const [update, edit_err] = await taskModel.editTask(id, updatedTask);
         if (edit_err)
             return res.status(400).json({
                 "data": null,

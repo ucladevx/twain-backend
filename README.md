@@ -299,6 +299,29 @@ returns
 }
 ```
 
+### Edit Task by ID
+
+PATCH /api/tasks/{id}
+
+```
+{
+  "name": "<task_name>",
+  "description": "<task_description>",
+  "duration": <task_duration_in_minutes>,
+  "due_date": <timestamp>
+}
+```
+
+returns
+
+```
+{
+  "task": <TASK_MODEL_ABOVE>,
+  "error": "<ERROR_MESSAGE>"
+}
+```
+
+
 **Note:**
 This will also remove scheduled events from the user's Google Calendar.
 
