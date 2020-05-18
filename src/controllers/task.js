@@ -227,6 +227,52 @@ router.get('/completedTasks', async (req, res)=> {
         })
     });
 
+    router.patch('/:id', async (req, res) => {
+        const params = req.params;
+        const id = parseInt(params.id, 10);
+
+        // Get the user_id of the user sending the request
+        const [user_id_from_request, err1] = await authService.getLoggedInUserID(req.headers);
+        if (err1) {
+            return res.status(400).json({
+                message: err1.message,
+            });
+        }
+        const [task, err2] = await taskModel.getTask(id);
+        if (!req.body)
+            return res.status(400).json({
+                data: null,
+                error: "Malformed Request"
+            });
+        if (user_id_from_request != task.user_id) {
+            // Make sure the requestor has access to this object, if not, Access Denied
+            return res.status(403).json({
+                data: {},
+                error: "Access Denied"
+            });
+        }
+
+        // get all the info from what the user wants to edit and change it into a string
+        const body = req.body;
+        const updates = [];
+        for (let key in body)
+            if (body.hasOwnProperty(key)) {
+                updates.push(key + "=" + "\'" + body[key] + "\'");
+            }
+        const updatedTask = updates.join(",");
+        
+        const [update, edit_err] = await taskModel.editTask(id, updatedTask);
+        if (edit_err)
+            return res.status(400).json({
+                "data": null,
+                "error": "Malformed Request in Edit Task: " + edit_err,
+            });
+        return res.status(200).json({
+            "task": update,
+            "error": edit_err,
+        });
+    })
+
     return router;
 }
 

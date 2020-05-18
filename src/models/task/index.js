@@ -42,6 +42,9 @@ const TaskModel = (repo) => {
         const [task, err] = await repo.deleteTask(taskID);
         return [task, err];
     };
+    const editTask = async (taskID, updatedTask) => {
+        return await repo.editTask(taskID, updatedTask);
+    };
 
     return {
         createTask,
@@ -53,7 +56,8 @@ const TaskModel = (repo) => {
         getTasksForScheduling,
         scheduleTask,
         confirmSchedule,
-        deleteTask
+        deleteTask,
+        editTask
     };
 }
 
