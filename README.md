@@ -298,6 +298,8 @@ returns
 	"error": "<ERROR_MESSAGE(S)>"
 }
 ```
+**Note:**
+This will also remove scheduled events from the user's Google Calendar.
 
 ### Edit Task by ID
 
@@ -311,6 +313,8 @@ PATCH /api/tasks/{id}
   "due_date": <timestamp>
 }
 ```
+**Note:**
+Not all above fields needed, only fields being changed
 
 returns
 
@@ -320,10 +324,6 @@ returns
   "error": "<ERROR_MESSAGE>"
 }
 ```
-
-
-**Note:**
-This will also remove scheduled events from the user's Google Calendar.
 
 ### Schedule Tasks (Array of Task objects)
 

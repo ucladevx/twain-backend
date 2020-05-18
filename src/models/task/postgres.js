@@ -191,7 +191,7 @@ const TaskRepo = (postgres) => {
     const editTask = async (taskID, updatedTask) => {
         try {
             const client = await postgres.connect();
-            query = "UPDATE tasks SET " + updatedTask + " WHERE id=" + taskID + " RETURNING * ;";
+            query = "UPDATE tasks SET " + updatedTask + ", updated_time=NOW() WHERE id=" + taskID + " RETURNING * ;";
             const res = await client.query(query);
             client.release();
             return [res.rows[0], null];
