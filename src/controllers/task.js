@@ -255,10 +255,17 @@ router.get('/completedTasks', async (req, res)=> {
         // get all the info from what the user wants to edit and change it into a string
         const body = req.body;
         const updates = [];
-        for (let key in body)
+
+        for (let key in body) {
             if (body.hasOwnProperty(key)) {
-                updates.push(key + "=" + "\'" + body[key] + "\'");
+                let value = body[key];
+                if (typeof(value) === 'string') {
+                    const newVal = value.replace(/\'/g, "\'\'");
+                    value = newVal;
+                }
+                updates.push(key + "=" + "\'" + value + "\'");
             }
+        }
         const updatedTask = updates.join(",");
         
         const [update, edit_err] = await taskModel.editTask(id, updatedTask);
