@@ -1,0 +1,100 @@
+body {
+    background: url("background-nologo2.png") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    overflow: hidden;
+}
+
+.logo {
+    position: absolute;
+    top: 77vh;
+    left: 82vw;
+    width: 18vw;
+}
+
+.example {
+    height: 60vh;
+    position: absolute;
+    top: 55vh;
+    left: 12vw;
+}
+
+.main {
+    position: relative;
+    left: 14vw;
+    top: 11vh;
+    color: #fff;
+    font-family: Roboto, sans-serif;
+}
+
+.main h1 {
+    line-height: 1.5em;
+    position: absolute;
+    font-size: 3vw;
+}
+
+.main p {
+    position: absolute;
+    top: 23vh;
+    font-size: 1vw;
+}
+
+.bigButton {
+    position: absolute;
+    border: none;
+    outline: none;
+    transition: background-color 0.5s;
+    width: 28vw;
+    height: 10vh;
+    border-radius: 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 30px 90px;
+    min-height: 40px;
+    min-width: 80px;
+    background-color: #fff;
+    color: #57afbe;
+    margin: 10px;
+    padding: 8px 13px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.4vw;
+}
+
+.Buttons {
+    position: relative;
+    top: 50vh;
+    left: 67vw;
+}
+
+.bigButton:hover {
+    cursor: pointer;
+    box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+.policyButton {
+    background: none;
+    border: none;
+    position: absolute;
+    top: 13vh;
+    left: 17vw;
+    font-size: 1vw;
+    font-family: 'Roboto', sans-serif;
+    color: #fff;
+}
+
+.policyButton:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.bottomText {
+    font-size: 1vw;
+    font-family: 'Roboto', sans-serif;
+    color: rgb(172, 172, 172);
+    position: absolute;
+    text-align: right;
+    top: 75vh;
+    left: 76vw;
+}

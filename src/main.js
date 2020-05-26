@@ -75,6 +75,16 @@ function start(port) {
 
 	app.use('/api', router);
 
+	// Serve the static webpage
+	app.get('/', async(req, res) => {
+		res.sendFile(path.join(__dirname, './static', 'index.html'));
+	})
+
+	// Serve the static assets
+	app.get('/static/:name', async(req, res) => {
+		res.sendFile(path.join(__dirname, './static', req.params.name));
+	})
+
 	app.listen(port, () => {
 		console.log(`Listening on port ${port}`);
 	});
