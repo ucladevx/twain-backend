@@ -41,8 +41,8 @@ const ScheduleService = () => {
      */
 
     // For when we allow the user more flexibility with start time:
-    const hoursOfOpStartArr = hoursOfOpStart.split(':').map(x => parseInt(x));
-    const hoursOfOpEndArr = hoursOfOpEnd.split(':').map(x => parseInt(x));
+    const hoursOfOpStartArr = hoursOfOpStart.split(':').map((x) => parseInt(x));
+    const hoursOfOpEndArr = hoursOfOpEnd.split(':').map((x) => parseInt(x));
 
     // Helper function to check if a time is within a given interval
     function inInterval(unixTime, interval) {
@@ -106,13 +106,6 @@ const ScheduleService = () => {
     let i = 0;
 
     while (i < busyIntervals.length) {
-      // TEST CODE
-      // console.log(local(currentTime).toISOString(true));
-      // console.log(
-      //   busyIntervals[i].map((x) => local(getUnix(x)).toISOString(true)),
-      // );
-      // console.log();
-
       // If current time is outside hours of operation, fast-forward
       if (!inHoursOfOp(currentTime)) {
         currentTime = getStartTime(currentTime);
@@ -252,37 +245,21 @@ const ScheduleService = () => {
         return [currentTask].concat(solve(restTasks, freeIntervals));
       }
 
-      // Go through all branches and find max number of tasks scheduled
-      let maxCount = 0;
-      // console.log('\nTask: ' + currentTask.id);
-      // console.log('Branches: ');
+      // Go through all branches and get scores
+      let scores = [];
+
       for (branch of allBranches) {
-        let count = 0;
-        // console.log(branch);
+        let score = 0;
         for (task of branch) {
           if (task.scheduled_time != null) {
-            count++;
+            score +=
+              (getUnix(task.due_date) - task.scheduled_time) / task.duration;
           }
         }
-        maxCount = count > maxCount ? count : maxCount;
+        scores.push(score);
       }
 
-      // Choose solution with max number
-      for (branch of allBranches) {
-        let count = 0;
-        for (task of branch) {
-          if (task.scheduled_time != null) {
-            count++;
-          }
-        }
-
-        if (count == maxCount) {
-          // console.log('\nTask: ' + currentTask.id);
-          // console.log('Returning');
-          // console.log(branch);
-          return branch;
-        }
-      }
+      return allBranches[scores.indexOf(Math.max(...scores))];
     }
 
     // Insert a busy interval at the last task due date
@@ -298,6 +275,7 @@ const ScheduleService = () => {
       else return 0;
     });
 
+    // Get free intervals
     const freeIntervals = await getFreeIntervals(
       startTime,
       localTZ,
@@ -306,8 +284,10 @@ const ScheduleService = () => {
       busyIntervals,
     );
 
-    // console.log(freeIntervals);
+    // Reset scheduled_time field
+    tasks.map((task) => (task.scheduled_time = null));
 
+    // Schedule tasks
     const result = solve(tasks, freeIntervals);
     for (let i = 0; i < result.length; i++) {
       if (result[i].scheduled_time != null) {
