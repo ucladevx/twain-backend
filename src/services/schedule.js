@@ -24,6 +24,7 @@ const ScheduleService = () => {
    * @param {string}  localTZ             The user's local timezone.
    * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
    * @param {Array}   hoursOfOpEnd        End of hours of operation.
+   * @param {Boolean} weekendsEnabled     Whether or not we can schedule on the weekends.
    * @param {Array}   busyIntervals       An array of busyInterval arrays.
    *
    * @return {Array} An array of free intervals in Unix time.
@@ -33,6 +34,7 @@ const ScheduleService = () => {
     localTZ,
     hoursOfOpStart,
     hoursOfOpEnd,
+    weekendsEnabled,
     busyIntervals,
   ) => {
     /*
@@ -57,9 +59,18 @@ const ScheduleService = () => {
       return moment.unix(unixTime).tz(localTZ);
     }
 
+    // Helper function to check if a time is during the weekend
+    function duringWeekend(localTime) {
+      return localTime.day() == 6 || localTime.day() == 0;
+    }
+
     // Helper function to check if a time is within hours of operation
     function inHoursOfOp(unixTime) {
       const localTime = local(unixTime);
+    
+      if (!weekendsEnabled && duringWeekend(localTime)) {
+        return !duringWeekend(localTime);
+      }
 
       const afterHoursStart =
         localTime.hour() >= hoursOfOpStartArr[0] &&
@@ -109,6 +120,7 @@ const ScheduleService = () => {
       // If current time is outside hours of operation, fast-forward
       if (!inHoursOfOp(currentTime)) {
         currentTime = getStartTime(currentTime);
+        i++;
       } else if (inInterval(currentTime, busyIntervals[i])) {
         // If current time is in a busy interval, go to next iteration
         currentTime = getUnix(busyIntervals[i][END]);
@@ -166,6 +178,7 @@ const ScheduleService = () => {
    * @param {string}  localTZ             The user's local timezone.
    * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
    * @param {Array}   hoursOfOpEnd        End of hours of operation.
+   * @param {Boolean} weekendsEnabled     Whether or not we can schedule on the weekend.
    * @param {Array}   busyIntervals       An array of busyInterval arrays.
    *
    * @returns {Array} An array of task objects, in the original order, but with set scheduled times.
@@ -176,6 +189,7 @@ const ScheduleService = () => {
     localTZ,
     hoursOfOpStart,
     hoursOfOpEnd,
+    weekendsEnabled,
     busyIntervals,
   ) => {
     // Helper function to check that a task ends before the end of current interval
@@ -281,6 +295,7 @@ const ScheduleService = () => {
       localTZ,
       hoursOfOpStart,
       hoursOfOpEnd,
+      weekendsEnabled,
       busyIntervals,
     );
 
