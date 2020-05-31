@@ -60,16 +60,17 @@ const ScheduleService = () => {
     }
 
     // Helper function to check if a time is during the weekend
-    function duringWeekend(localTime) {
+    function duringWeekend(unixTime) {
+      const localTime = local(unixTime);
       return localTime.day() == 6 || localTime.day() == 0;
     }
 
     // Helper function to check if a time is within hours of operation
     function inHoursOfOp(unixTime) {
       const localTime = local(unixTime);
-    
-      if (!weekendsEnabled && duringWeekend(localTime)) {
-        return !duringWeekend(localTime);
+
+      if (!weekendsEnabled && duringWeekend(unixTime)) {
+        return false;
       }
 
       const afterHoursStart =
@@ -84,22 +85,45 @@ const ScheduleService = () => {
       return afterHoursStart && beforeHoursEnd;
     }
 
-    // Helper function to get beginning of next day
+    /*
+     *  Helper function to get beginning of next valid interval
+     * In most cases, this just means the next day, but in the
+     * case that the user doesn't allow scheduling on weekends,
+     * this would mean the following Monday.
+     */
     function getStartTime(unixTime) {
       let currentDay = moment.unix(unixTime).tz(localTZ);
-      currentDay.hour(hoursOfOpStartArr[0]);
-      currentDay.minute(hoursOfOpStartArr[1]);
-      currentDay.second(0).millisecond(0);
-      unixCurrent = currentDay.unix();
-
       let nextDay = currentDay.clone();
-      nextDay.add(1, 'days');
-      nextDay.hour(hoursOfOpStartArr[0]);
-      nextDay.minute(hoursOfOpStartArr[1]);
-      nextDay.second(0).millisecond(0);
-      unixNext = nextDay.unix();
 
-      return unixCurrent < unixTime ? unixNext : unixCurrent;
+      const isDuringWeekend = duringWeekend(unixTime);
+
+      if (!weekendsEnabled && isDuringWeekend) {
+        if (currentDay.day() == 6) {
+          nextDay.add(2, 'days');
+        } else if (currentDay.day() == 0) {
+          nextDay.add(1, 'days');
+        }
+
+        nextDay.hour(hoursOfOpStartArr[0]);
+        nextDay.minute(hoursOfOpStartArr[1]);
+        nextDay.second(0).millisecond(0);
+        unixNext = nextDay.unix();
+
+        return unixNext;
+      } else {
+        currentDay.hour(hoursOfOpStartArr[0]);
+        currentDay.minute(hoursOfOpStartArr[1]);
+        currentDay.second(0).millisecond(0);
+        unixCurrent = currentDay.unix();
+
+        nextDay.add(1, 'days');
+        nextDay.hour(hoursOfOpStartArr[0]);
+        nextDay.minute(hoursOfOpStartArr[1]);
+        nextDay.second(0).millisecond(0);
+        unixNext = nextDay.unix();
+
+        return unixCurrent < unixTime ? unixNext : unixCurrent;
+      }
     }
 
     // Helper function to get end of current day
@@ -120,7 +144,6 @@ const ScheduleService = () => {
       // If current time is outside hours of operation, fast-forward
       if (!inHoursOfOp(currentTime)) {
         currentTime = getStartTime(currentTime);
-        i++;
       } else if (inInterval(currentTime, busyIntervals[i])) {
         // If current time is in a busy interval, go to next iteration
         currentTime = getUnix(busyIntervals[i][END]);
@@ -304,6 +327,20 @@ const ScheduleService = () => {
 
     // Schedule tasks
     const result = solve(tasks, freeIntervals);
+
+    // Sort the scheduled tasks in ascending order of scheduled time
+    result.sort((a, b) => {
+      if (a.scheduled_time == null && b.scheduled_time == null) return 0;
+      else if (a.scheduled_time == null && b.scheduled_time != null) return 1;
+      else if (a.scheduled_time != null && b.scheduled_time == null) return -1;
+      if (moment.unix(a.scheduled_time).isBefore(moment.unix(b.scheduled_time)))
+        return -1;
+      else if (moment.unix(a.scheduled_time).isAfter(moment(b.scheduled_time)))
+        return 1;
+      else return 0;
+    });
+
+    // Translate into ISO Strings
     for (let i = 0; i < result.length; i++) {
       if (result[i].scheduled_time != null) {
         result[i].scheduled_time = moment

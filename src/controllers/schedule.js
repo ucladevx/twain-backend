@@ -76,9 +76,31 @@ const ScheduleController = (
       });
     }
 
+    // Sort the busy intervals in ascending order of start datetime
+    googleBusyInts.sort((a, b) => {
+      if (moment(a[0]).isBefore(moment(b[0]))) return -1;
+      else if (moment(a[0]).isAfter(moment(b[0]))) return 1;
+      else return 0;
+    });
+
     // TEST CODE - Get the user's free intervals
-    // let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);
-    // freeInts = freeInts.map(x => x.map(y => moment.unix(y).tz(req.body.timeZone).toISOString(true)));
+    // let freeInts = await scheduleService.getFreeIntervals(
+    //   req.body.timeMin,
+    //   req.body.timeZone,
+    //   user.hours_start,
+    //   user.hours_end,
+    //   user.weekend_setting,
+    //   googleBusyInts,
+    // );
+    // freeInts = freeInts.map((x) =>
+    //   x.map((y) =>
+    //     moment
+    //       .unix(y)
+    //       .tz(req.body.timeZone)
+    //       .toISOString(true),
+    //   ),
+    // );
+    // console.log(freeInts);
 
     const scheduledTasks = await scheduleService.scheduleTasks(
       tasks,
