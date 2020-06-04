@@ -28,5 +28,8 @@ p_shell:
 reset_db: 
 	docker-compose exec postgres psql -U postgres twain -c "DROP TABLE users, tasks, events;"
 
+backup_db:
+	docker-compose exec postgres pg_dumpall -U postgres > twain_db_dump_`date +%d-%m-%Y"_"%H_%M_%S`.sql
+
 
 
