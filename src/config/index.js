@@ -2,21 +2,22 @@
 // JSON, and parse that JSON instead, since it is the same thing
 let postgreshostname = process.env.POSTGRES_HOSTNAME;
 if (!postgreshostname) {
-  postgreshostname = 'localhost';
+  postgreshostname = "localhost";
 }
 const config = {
   database: {
-    user: 'postgres',
-    password: 'admin',
+    user: "postgres",
+    password: "admin",
     port: 5432,
     host: postgreshostname,
-    database: 'twain',
+    database: "twain",
   },
-  port: 31337,
+  httpPort: 80,
+  httpsPort: 443,
   auth: {
-    secret: 'twain test secret',
+    secret: "twain test secret",
     expirationTime: 86400,
-    issuer: 'twain',
+    issuer: "twain",
   },
 };
 

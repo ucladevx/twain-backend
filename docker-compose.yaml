@@ -12,12 +12,15 @@ services:
     restart: unless-stopped
   backend:
     image: twain/backend:latest
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
     ports:
-      - 31337:31337
+      - 80:80
+      - 443:443
     environment:
       POSTGRES_HOSTNAME: postgres
     restart: unless-stopped
-    depends_on: 
+    depends_on:
       - postgres
 
 volumes:
