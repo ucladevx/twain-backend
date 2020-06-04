@@ -166,7 +166,7 @@ router.get('/completedTasks', async (req, res)=> {
         })
     })
 
-    router.delete('/', async (req, res) => {
+    router.post('/delete', async (req, res) => {
         const [userID, userErr] = await authService.getLoggedInUserID(req.headers);
         if (userID == null) {
             return res.status(400).json({

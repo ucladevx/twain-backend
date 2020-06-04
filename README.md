@@ -299,7 +299,7 @@ returns
 
 ### Delete Tasks by ID (Array of IDs)
 
-DELETE /api/tasks
+POST /api/tasks/delete
 
 ```
 {
