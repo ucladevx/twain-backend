@@ -284,19 +284,48 @@ const ScheduleService = () => {
 
       // Go through all branches and get scores
       let scores = [];
+      let scheduledNumArr = [];
 
+      console.log("On task id: " + currentTask.id)
+      console.log("Branches:")
+
+      let maxScheduledNum = -1;
       for (branch of allBranches) {
+        console.log(branch)
         let score = 0;
+        let numScheduled = 0;
         for (task of branch) {
           if (task.scheduled_time != null) {
+            numScheduled += 1
             score +=
               (getUnix(task.due_date) - task.scheduled_time) / task.duration;
           }
         }
+        console.log("Score")
+        console.log(score)
+        console.log("\n\n")
         scores.push(score);
+
+        if (numScheduled > maxScheduledNum) {
+            maxScheduledNum = numScheduled
+        }
+
+        scheduledNumArr.push(numScheduled)
       }
 
-      return allBranches[scores.indexOf(Math.max(...scores))];
+      let indexToReturn = -1;
+      let highScore = -1;
+
+      for (let i = 0; i < scheduledNumArr.length; i++) {
+        if (scheduledNumArr[i] == maxScheduledNum) {
+          if (scores[i] > highScore) {
+            indexToReturn = i
+            highScore = scores[i]
+          }
+        }
+      }
+
+      return allBranches[indexToReturn];
     }
 
     // Insert a busy interval at the last task due date
