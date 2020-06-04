@@ -24,6 +24,7 @@ const ScheduleService = () => {
    * @param {string}  localTZ             The user's local timezone.
    * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
    * @param {Array}   hoursOfOpEnd        End of hours of operation.
+   * @param {Boolean} weekendsEnabled     Whether or not we can schedule on the weekends.
    * @param {Array}   busyIntervals       An array of busyInterval arrays.
    *
    * @return {Array} An array of free intervals in Unix time.
@@ -33,6 +34,7 @@ const ScheduleService = () => {
     localTZ,
     hoursOfOpStart,
     hoursOfOpEnd,
+    weekendsEnabled,
     busyIntervals,
   ) => {
     /*
@@ -57,9 +59,19 @@ const ScheduleService = () => {
       return moment.unix(unixTime).tz(localTZ);
     }
 
+    // Helper function to check if a time is during the weekend
+    function duringWeekend(unixTime) {
+      const localTime = local(unixTime);
+      return localTime.day() == 6 || localTime.day() == 0;
+    }
+
     // Helper function to check if a time is within hours of operation
     function inHoursOfOp(unixTime) {
       const localTime = local(unixTime);
+
+      if (!weekendsEnabled && duringWeekend(unixTime)) {
+        return false;
+      }
 
       const afterHoursStart =
         localTime.hour() >= hoursOfOpStartArr[0] &&
@@ -73,22 +85,45 @@ const ScheduleService = () => {
       return afterHoursStart && beforeHoursEnd;
     }
 
-    // Helper function to get beginning of next day
+    /*
+     *  Helper function to get beginning of next valid interval
+     * In most cases, this just means the next day, but in the
+     * case that the user doesn't allow scheduling on weekends,
+     * this would mean the following Monday.
+     */
     function getStartTime(unixTime) {
       let currentDay = moment.unix(unixTime).tz(localTZ);
-      currentDay.hour(hoursOfOpStartArr[0]);
-      currentDay.minute(hoursOfOpStartArr[1]);
-      currentDay.second(0).millisecond(0);
-      unixCurrent = currentDay.unix();
-
       let nextDay = currentDay.clone();
-      nextDay.add(1, 'days');
-      nextDay.hour(hoursOfOpStartArr[0]);
-      nextDay.minute(hoursOfOpStartArr[1]);
-      nextDay.second(0).millisecond(0);
-      unixNext = nextDay.unix();
 
-      return unixCurrent < unixTime ? unixNext : unixCurrent;
+      const isDuringWeekend = duringWeekend(unixTime);
+
+      if (!weekendsEnabled && isDuringWeekend) {
+        if (currentDay.day() == 6) {
+          nextDay.add(2, 'days');
+        } else if (currentDay.day() == 0) {
+          nextDay.add(1, 'days');
+        }
+
+        nextDay.hour(hoursOfOpStartArr[0]);
+        nextDay.minute(hoursOfOpStartArr[1]);
+        nextDay.second(0).millisecond(0);
+        unixNext = nextDay.unix();
+
+        return unixNext;
+      } else {
+        currentDay.hour(hoursOfOpStartArr[0]);
+        currentDay.minute(hoursOfOpStartArr[1]);
+        currentDay.second(0).millisecond(0);
+        unixCurrent = currentDay.unix();
+
+        nextDay.add(1, 'days');
+        nextDay.hour(hoursOfOpStartArr[0]);
+        nextDay.minute(hoursOfOpStartArr[1]);
+        nextDay.second(0).millisecond(0);
+        unixNext = nextDay.unix();
+
+        return unixCurrent < unixTime ? unixNext : unixCurrent;
+      }
     }
 
     // Helper function to get end of current day
@@ -166,6 +201,7 @@ const ScheduleService = () => {
    * @param {string}  localTZ             The user's local timezone.
    * @param {Array}   hoursOfOpStart      Beginning of hours of operation.
    * @param {Array}   hoursOfOpEnd        End of hours of operation.
+   * @param {Boolean} weekendsEnabled     Whether or not we can schedule on the weekend.
    * @param {Array}   busyIntervals       An array of busyInterval arrays.
    *
    * @returns {Array} An array of task objects, in the original order, but with set scheduled times.
@@ -176,6 +212,7 @@ const ScheduleService = () => {
     localTZ,
     hoursOfOpStart,
     hoursOfOpEnd,
+    weekendsEnabled,
     busyIntervals,
   ) => {
     // Helper function to check that a task ends before the end of current interval
@@ -247,19 +284,48 @@ const ScheduleService = () => {
 
       // Go through all branches and get scores
       let scores = [];
+      let scheduledNumArr = [];
 
+      console.log("On task id: " + currentTask.id)
+      console.log("Branches:")
+
+      let maxScheduledNum = -1;
       for (branch of allBranches) {
+        console.log(branch)
         let score = 0;
+        let numScheduled = 0;
         for (task of branch) {
           if (task.scheduled_time != null) {
+            numScheduled += 1
             score +=
               (getUnix(task.due_date) - task.scheduled_time) / task.duration;
           }
         }
+        console.log("Score")
+        console.log(score)
+        console.log("\n\n")
         scores.push(score);
+
+        if (numScheduled > maxScheduledNum) {
+            maxScheduledNum = numScheduled
+        }
+
+        scheduledNumArr.push(numScheduled)
       }
 
-      return allBranches[scores.indexOf(Math.max(...scores))];
+      let indexToReturn = -1;
+      let highScore = -1;
+
+      for (let i = 0; i < scheduledNumArr.length; i++) {
+        if (scheduledNumArr[i] == maxScheduledNum) {
+          if (scores[i] > highScore) {
+            indexToReturn = i
+            highScore = scores[i]
+          }
+        }
+      }
+
+      return allBranches[indexToReturn];
     }
 
     // Insert a busy interval at the last task due date
@@ -281,6 +347,7 @@ const ScheduleService = () => {
       localTZ,
       hoursOfOpStart,
       hoursOfOpEnd,
+      weekendsEnabled,
       busyIntervals,
     );
 
@@ -289,6 +356,20 @@ const ScheduleService = () => {
 
     // Schedule tasks
     const result = solve(tasks, freeIntervals);
+
+    // Sort the scheduled tasks in ascending order of scheduled time
+    result.sort((a, b) => {
+      if (a.scheduled_time == null && b.scheduled_time == null) return 0;
+      else if (a.scheduled_time == null && b.scheduled_time != null) return 1;
+      else if (a.scheduled_time != null && b.scheduled_time == null) return -1;
+      if (moment.unix(a.scheduled_time).isBefore(moment.unix(b.scheduled_time)))
+        return -1;
+      else if (moment.unix(a.scheduled_time).isAfter(moment(b.scheduled_time)))
+        return 1;
+      else return 0;
+    });
+
+    // Translate into ISO Strings
     for (let i = 0; i < result.length; i++) {
       if (result[i].scheduled_time != null) {
         result[i].scheduled_time = moment

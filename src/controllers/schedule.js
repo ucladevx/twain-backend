@@ -84,8 +84,23 @@ const ScheduleController = (
     });
 
     // TEST CODE - Get the user's free intervals
-    // let freeInts = await scheduleService.getFreeIntervals(req.body.timeMin, req.body.timeZone, startHr, endHr, googleBusyInts);
-    // freeInts = freeInts.map(x => x.map(y => moment.unix(y).tz(req.body.timeZone).toISOString(true)));
+    // let freeInts = await scheduleService.getFreeIntervals(
+    //   req.body.timeMin,
+    //   req.body.timeZone,
+    //   user.hours_start,
+    //   user.hours_end,
+    //   user.weekend_setting,
+    //   googleBusyInts,
+    // );
+    // freeInts = freeInts.map((x) =>
+    //   x.map((y) =>
+    //     moment
+    //       .unix(y)
+    //       .tz(req.body.timeZone)
+    //       .toISOString(true),
+    //   ),
+    // );
+    // console.log(freeInts);
 
     const scheduledTasks = await scheduleService.scheduleTasks(
       tasks,
@@ -93,6 +108,7 @@ const ScheduleController = (
       req.body.timeZone,
       user.hours_start,
       user.hours_end,
+      user.weekend_setting,
       googleBusyInts,
     );
 
