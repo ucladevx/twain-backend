@@ -286,12 +286,8 @@ const ScheduleService = () => {
       let scores = [];
       let scheduledNumArr = [];
 
-      console.log("On task id: " + currentTask.id)
-      console.log("Branches:")
-
       let maxScheduledNum = -1;
       for (branch of allBranches) {
-        console.log(branch)
         let score = 0;
         let numScheduled = 0;
         for (task of branch) {
@@ -301,9 +297,6 @@ const ScheduleService = () => {
               (getUnix(task.due_date) - task.scheduled_time) / task.duration;
           }
         }
-        console.log("Score")
-        console.log(score)
-        console.log("\n\n")
         scores.push(score);
 
         if (numScheduled > maxScheduledNum) {
