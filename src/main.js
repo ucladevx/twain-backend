@@ -75,12 +75,7 @@ function start(httpPort, httpsPort) {
   app.disable("x-powered-by");
   app.use(compression());
   app.use(morgan("dev"));
-  app.use(
-    cors({
-      origin: ["http://localhost:3000"],
-      credentials: true,
-    })
-  );
+  app.use(cors());
   app.use(cookieParser());
   app.use(bodyParser.json());
   app.use(express.static(__dirname, { dotfiles: "allow" }));
